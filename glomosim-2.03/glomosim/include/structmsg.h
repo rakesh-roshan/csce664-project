@@ -103,6 +103,10 @@ enum {
     MSG_NETWORK_CheckRouteTimeout,
     MSG_NETWORK_CheckNeighborTimeout,
 
+    /* Messages Types special for IGF */
+    MSG_NETWORK_EVENT_IGFScheduleABeacon,
+    MSG_NETWORK_EVENT_IGFEnableScheduleABeacon,
+    MSG_NETWORK_EVENT_IGFStartABeacon,
     /* Messages Types special for IP */
     MSG_NETWORK_BuffTimerExpired,   
 

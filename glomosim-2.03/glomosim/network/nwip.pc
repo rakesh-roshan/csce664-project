@@ -70,6 +70,7 @@
 #include "dsr.h"
 #include "odmrp.h"
 #include "zrp.h"
+#include "IGF.h"
 //#include "ospf.h"
 #include "java_gui.h"
 #include "fifoqueue.h"
@@ -1896,6 +1897,12 @@ void ProcessPacketForMeFromMac(GlomoNode *node,  Message *msg)
       break;
    }
 
+   case IPPROTO_IGF: {
+      RoutingIGFHandleProtocolPacket(node, msg, sourceAddress,
+          destinationAddress);
+      break;
+   }
+
    case IPPROTO_LAR1: {
       NetworkLar1HandleProtocolPacket(node, msg);
       break;
@@ -2081,6 +2088,11 @@ void NetworkIpLayer(GlomoNode *node, Message *msg) {
       break;
    }
 
+   case ROUTING_PROTOCOL_IGF: {
+      RoutingIGFHandleProtocolEvent(node, msg);
+      break;
+   }
+
    case ROUTING_PROTOCOL_LAR1: {
       NetworkLar1HandleCheckTimeoutAlarm(node, msg);
       break;
@@ -2249,6 +2261,11 @@ void NetworkIpInit(GlomoNode* node, const GlomoNodeInput* nodeInput)
       RoutingZrpInit(
          node, (GlomoRoutingZrp**)&ipLayer->routingProtocol, nodeInput);
    }
+   else if (strcmp(protocolString, "IGF") == 0) {
+      ipLayer->routingProtocolChoice = ROUTING_PROTOCOL_IGF;
+      RoutingIGFInit(
+         node, (GlomoRoutingIGF**)&ipLayer->routingProtocol, nodeInput);
+   }
    //else if (strcmp(protocolString, "OSPF") == 0) {
    //   ipLayer->routingProtocolChoice = ROUTING_PROTOCOL_OSPF;
    //   OspfInit(node, (GlomoRoutingOspf**)&ipLayer->routingProtocol, nodeInput);
@@ -2363,6 +2380,9 @@ void NetworkIpFinalize(GlomoNode *node)
       break;
    case ROUTING_PROTOCOL_ZRP:
       RoutingZrpFinalize(node);
+      break;
+   case ROUTING_PROTOCOL_IGF:
+      RoutingIGFFinalize(node);
       break;
    case ROUTING_PROTOCOL_NONE:
       // No Network Level routing protocol.
