@@ -56,7 +56,7 @@ SIM_HDRS =  ../main/glomo.h ../main/driver.h \
             ../mac/tsma.h ../mac/wiredlink.h \
             ../network/ipqueue.h ../network/fifoqueue.h \
             ../network/nwip.h ../network/nwlar1.h ../network/odmrp.h \
-            ../network/aodv.h ../network/dsr.h ../network/zrp.h \
+            ../network/aodv.h ../network/dsr.h ../network/zrp.h ../network/IGF.h \
             ../transport/udp.h  ../transport/in_pcb.h \
             ../transport/tcp/tcp_config.h ../transport/tcp/tcp_var.h \
             ../transport/tcp/tcp_fsm.h ../transport/tcp/tcp_proto.h \
@@ -130,7 +130,7 @@ PAR_FILES = ../main/glomo.pc ../main/mobility.pc \
             ../network/network.pc ../network/nwcommon.pc ../network/nwip.pc \
             ../network/user_nwip.pc ../network/fifoqueue.pc \
             ../network/nwlar1.pc ../network/odmrp.pc ../network/aodv.pc \
-            ../network/dsr.pc ../network/zrp.pc \
+            ../network/dsr.pc ../network/zrp.pc ../network/IGF.pc\
             ../transport/transport.pc ../transport/in_pcb.pc \
             ../transport/udp.pc \
             ../transport/tcp/tcp.pc ../transport/tcp/tcp_subr.pc \
@@ -162,12 +162,13 @@ TSMA_PARAM = tsma_param_gen
 
 #
 #
-COMFLAG = -g -O3 -I../include/ -I../transport -I../transport/tcp -I../application -I../mac -I../main -I../network -I../radio
+#COMFLAG = -g -O3 -I../include/ -I../transport -I../transport/tcp -I../application -I../mac -I../main -I../network -I../radio
+COMFLAG = -g -I../include/ -I../transport -I../transport/tcp -I../application -I../mac -I../main -I../network -I../radio
 
 #
 # C Compiler
-CC = gcc
-CTX = g++
+CC = gcc -g
+CTX = g++ -g
 CFLAGS = $(COMFLAG)
 
 # Parsec

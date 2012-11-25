@@ -187,6 +187,8 @@ GLOMO_AppInit(GlomoNode *node, const GlomoNodeInput *nodeInput)
     }
     else if (strcmp(buf, "ZRP") == 0) {
     }
+    else if (strcmp(buf, "IGF") == 0) {
+    }
     else {
         assert(FALSE);
     }
