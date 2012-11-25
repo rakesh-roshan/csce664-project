@@ -2250,6 +2250,11 @@ void Mac802_11ReceivePacketFromRadio(
          Mac802_11ProcessFrag(node, M802, msg);
          GLOMO_MsgFree(node, msg);
          break;
+      //anku
+      case M802_11_ORTS: 
+	Mac802_11ProcessORTS(node, M802, msg);
+	break;
+      
       default:
          printf("MAC_802_11: Unknown frame type %d\n",
                 hdr->frameType);
@@ -2467,6 +2472,10 @@ void Mac802_11HandleTimeout(GlomoNode *node, GlomoMac802_11 *M802)
       M802->retxDueToFragAck++;
       Mac802_11RetransmitFrag(node, M802);
       break;
+   case M802_11_X_RCV_ORTS_ELIGIBLE_CTS:
+       Mac802_11TransmitCTSFrame(node,M802,M802->ORtsMsg);
+       GLOMO_MsgFree(node,M802->ORtsMsg);
+       M802->ORtsMsg = NULL;
    default:
       printf("MAC_802_11: Node %u got unknown state type %d",
              node->nodeAddr, M802->state);
@@ -2671,5 +2680,106 @@ void Mac802_11Finalize(GlomoNode *node, int interfaceIndex)
       Mac802_11PrintStats(node, M802);
    }
 }
+//anku
+
+static 
+void Mac802_11TransmitORTSFrame(GlomoNode *node, GlomoMac802_11 *M802)
+{
+   M802_11ORTSControlFrame* hdr;
+   Message *pktToRadio;
+   Message *tmpPktPtr;
+   NODE_ADDR destAddr;
+
+   NetworkIpOutputQueueTopPacketForAPriority(
+      node, M802->myGlomoMac->interfaceIndex, M802->currentPriority,
+      &tmpPktPtr, &destAddr);
+
+   hdr->sourceposition = node->position;
+   if  (tmpPktPtr ==NULL)
+   {
+      assert(FALSE); abort();
+      Mac802_11CheckForOutgoingPacket(node, M802);
+      return;
+   }
+
+   pktToRadio = GLOMO_MsgAlloc(node, 0, 0, 0);
+   
+   GLOMO_MsgPacketAlloc(node, pktToRadio, sizeof(M802_11ORTSControlFrame));
+   hdr = (M802_11ORTSControlFrame*)pktToRadio->packet;
+
+   hdr->frameType = M802_11_ORTS;
+   hdr->sourceAddr = node->nodeAddr,
+   hdr->destAddr = ANY_DEST;
+   
+   M802->waitingForAckOrCtsFromAddress = destAddr;
+   
+   if (tmpPktPtr->packetSize <= M802_11_FRAG_THRESH)
+   {
+      clocktype packetTransmissionDuration =
+         CalcFragmentTransmissionDuration(
+            M802->bandwidth, tmpPktPtr->packetSize);
+   
+      hdr->duration =
+         M802->extraPropDelay + M802_11_SIFS + 
+         M802->ctsOrAckTransmissionDuration + 
+         M802->extraPropDelay + M802_11_SIFS + 
+         packetTransmissionDuration + 
+         M802->extraPropDelay + M802_11_SIFS + 
+         M802->ctsOrAckTransmissionDuration +
+         M802->extraPropDelay;
+         
+   } else {
+      assert(FALSE); abort();  // Fragmentation Needs to be rewritten. (Jay)
+      
+
+   }//if//
+
+   Mac802_11SetState(node, M802, M802_11_X_ORTS);
+   StartTransmittingPacket(
+      node, M802, pktToRadio, M802_11_DELAY_UNTIL_SIGNAL_AIRBORN);
+}
 
 
+clocktype find_delay(double progress,double radius){
+    clocktype f;
+    f=(0.8*(1-(progress/radius))+0.2*rand());
+    return M802_11_SIFS+(M802_11_DIFS-M802_11_SIFS)*f;
+
+}
+void Mac802_11ProcessORTS(GlomoNode *node, GlomoMac802_11 *M802, Message *msg)
+{
+  double degree = 0;
+  M802_11ORTSControlFrame * hdr = (M802_11ORTSControlFrame *)msg->packet;
+  GlomoCoordinates source = hdr->sourceposition;
+  GlomoCoordinates receiver = node->position;
+  GlomoCoordinates destination = hdr->finalposition;
+  degree = find_angle(source,receiver,destination);
+  if (degree<30){
+      double progress = sqrt(find_distance2(source,destination))-sqrt(find_distance2(receiver,destination));
+      int radioIndex = M802->myGlomoMac->interfaceIndex;
+      double radius = (node->radioData[radioIndex])->radiorange;
+      
+      clocktype timerDelay = find_delay(progress,radius);
+      Mac802_11SetState(node,M802,M802_11_X_RCV_ORTS_ELIGIBLE_CTS);
+      M802->ORtsMsg = msg;
+      Mac802_11StartTimer(node,M802,timerDelay);
+//change state and start timer
+ 
+ }
+}
+
+double find_angle(GlomoCoordinates source,GlomoCoordinates receiver,GlomoCoordinates destination)
+{
+  double SR2 = find_distance2(source,receiver);
+  double SD2 = find_distance2(source,destination);
+  double RD2 = find_distance2(receiver,destination);
+  double radian = acos((SR2 + SD2- RD2)/(2*sqrt(SR2)*sqrt(SD2)));
+  double degree = (radian * 180)/PI;
+  return degree;
+}
+
+double find_distance2(GlomoCoordinates s, GlomoCoordinates d){
+  double ans = pow((s.x-d.x),2)+pow((s.y-d.y),2)+pow((s.z-d.z),2);
+  return ans;
+  
+}

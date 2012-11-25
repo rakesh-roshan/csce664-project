@@ -92,7 +92,9 @@ typedef enum
     M802_11_X_BROADCAST,        // 12
     M802_11_X_FRAGMENT,         // 13
     M802_11_X_ACK,              // 14  
-    M802_11_X_FRAGACK           // 15  Last State in range
+    M802_11_X_FRAGACK,           // 15  Last State in range
+    M802_11_X_RCV_ORTS_ELIGIBLE_CTS, //anku
+    M802_11_X_ORTS
 } M802_11_MacStates;
 
 
@@ -122,7 +124,8 @@ typedef enum
     M802_11_DATA,         // 3
     M802_11_RTS,          // 4
     M802_11_CTS,          // 5
-    M802_11_FRAGMENT      // 6
+    M802_11_FRAGMENT,      // 6
+    M802_11_ORTS      // 7
 } M802_11_MacFrameType;
 
 
@@ -354,6 +357,7 @@ typedef struct glomo_mac_802_11_str
 
     NetworkQueueingPriorityType currentPriority;
     
+    Message *ORtsMsg;
     
     
     
@@ -377,6 +381,7 @@ void Mac802_11Layer(GlomoNode *node, int interfaceIndex, Message *msg);
  * PURPOSE     Initialization function for 802_11 protocol of MAC layer.
 
  * Parameters:
+
  *     node:      node being initialized.
  *     nodeInput: structure containing contents of input file
  */
@@ -417,7 +422,25 @@ void Mac802_11ReceiveRadioStatusChangeNotification(
    clocktype receiveDuration,
    const Message* potentialIncomingPacket);
 
+void Mac802_11ProcessORTS(GlomoNode *node, GlomoMac802_11 *M802, Message *msg);
+double find_angle(GlomoCoordinates source,GlomoCoordinates receiver,GlomoCoordinates destination);
+double find_distance2(GlomoCoordinates s, GlomoCoordinates d);
 
+typedef struct _Mac802_11ORTSCtrlFrame
+{                               //  Should Be  Actually
+    unsigned short frameType;   //      2         2
+    char Padding[2];            //      0         2
+    int duration;               //      2         4 
+    NODE_ADDR destAddr;         //      6         4
+    
+    NODE_ADDR sourceAddr;       //      6         4
+    char FCS[4];                //      4         4
+    
+  GlomoCoordinates sourceposition;
+  GlomoCoordinates finalposition;
+
+} M802_11ORTSControlFrame;      //----------------------
+                                //     20        20
 
 
 

@@ -55,6 +55,11 @@
 #include "radio.h"
 #include "radio_accnoise.h"
 #include "radio_nonoise.h"
+#include "pathloss_free_space.h"
+#include "pathloss_two_ray.h"
+#include "pathloss_matrix.h"
+#define DELTA 0.001
+#define PACKET_SIZE (1024*8)
 
 
 int GLOMO_RadioGetRadioNumberForWavelength(GlomoNode* node, double wavelength) {
@@ -105,7 +110,7 @@ void GLOMO_RadioCreateARadioForMacLayer(
     double frequency;
     int bandwidth;
     int radioIndex = node->numberRadios;
-    
+    double radiorange;
     node->numberRadios++;
     *radioNumber = radioIndex;
     assert(radioIndex < MAX_NUM_RADIOS);
@@ -344,10 +349,12 @@ void GLOMO_RadioCreateARadioForMacLayer(
     switch(node->radioData[radioIndex]->radioType) {
         case RADIO_ACCNOISE:
             RadioAccnoiseInit(node, radioIndex, nodeInput);
+            radiorange = find_radiorange(node->radioData[radioIndex],*node);
             break;
             
         case RADIO_NONOISE:
             RadioNonoiseInit(node, radioIndex, nodeInput);
+            radiorange =0;
             break;
             
         default:
@@ -449,7 +456,7 @@ RadioStatusType GLOMO_RadioGetStatus(GlomoNode* node, int radioNum) {
             
         default:
             assert(FALSE); abort(); return 0;
-    }
+   }
 }
 
 
@@ -487,4 +494,98 @@ void GLOMO_RadioStartTransmittingPacket(
     }//switch//
 }
 
+double find_radiorange(GlomoRadio *thisRadio, GlomoNode nodeNew){
+    double rxAntennaGain_dB;
+    PropInfo propInfo;
+    double txAntennaGain_dB;
+    double rxAntennaHeight;
+    double txAntennaHeight;
+    double noiseLevel_mW;
+    double distanceNotReachable = 1000000.0;
+    double distanceReachable = 0.0;
+    double distance = distanceNotReachable;
+    double pathloss_dB;
+    GlomoRadioAccnoise   *accnoise;
+    propInfo.txAddr = nodeNew.nodeAddr;
+    propInfo.txPower_dBm = thisRadio->txPower_dBm;
+    propInfo.wavelength = thisRadio->wavelength;
+    
+    accnoise = (GlomoRadioAccnoise *)thisRadio->radioVar;
+    
+    txAntennaGain_dB = thisRadio->antennaGain_dB;
+    txAntennaHeight = thisRadio->antennaHeight;
+    rxAntennaGain_dB = thisRadio->antennaGain_dB;
+    rxAntennaHeight = thisRadio->antennaHeight;
+    noiseLevel_mW = accnoise->noisePower_mW;
 
+    while (distanceNotReachable - distanceReachable > DELTA) {
+        BOOL   reachable;
+
+        switch (((nodeNew.propData))->pathlossModel) {
+            case FREE_SPACE: {
+                pathloss_dB = PathlossFreeSpace(distance,
+                                                thisRadio->wavelength,
+                                                txAntennaGain_dB,
+                                                rxAntennaGain_dB);
+                break;
+            }
+            case TWO_RAY: {
+                pathloss_dB = PathlossTwoRay(distance,
+                                             thisRadio->wavelength,
+                                             txAntennaGain_dB,
+                                             txAntennaHeight,
+                                             rxAntennaGain_dB,
+                                             rxAntennaHeight);
+                break;
+            }
+            case PATHLOSS_MATRIX: {
+                assert(FALSE);
+                break;
+            }
+            default: {
+                assert(FALSE); abort();
+            }
+        }
+
+        propInfo.rxPower_mW = NON_DB(propInfo.txPower_dBm - pathloss_dB);
+
+        if (accnoise->radioRxType == BER_BASED) {
+            double BER, PER;
+
+            BER = GLOMO_PropBER(&nodeNew, propInfo.rxPower_mW,
+                                noiseLevel_mW);
+
+            PER = 1.0 - pow((1.0 - BER), (double)PACKET_SIZE);
+
+            if (PER <= 0.5) {
+                reachable = TRUE;
+            }
+            else {
+                reachable = FALSE;
+            }
+        }
+        else {
+            assert(accnoise->radioRxType == SNR_BOUNDED);
+
+            if (propInfo.rxPower_mW >= thisRadio->rxThreshold_mW) {
+                reachable = TRUE;
+            }
+            else {
+                reachable = FALSE;
+            }
+        }
+
+        if (reachable == TRUE) {
+            distanceReachable = distance;
+            distance += (distanceNotReachable - distanceReachable) / 2.0;
+        }
+        else {
+            assert(reachable == FALSE);
+
+            distanceNotReachable = distance;
+            distance -= (distanceNotReachable - distanceReachable) / 2.0;
+        }
+    }
+    printf("radio range: %.3lfm\n", distanceReachable);
+    return distanceReachable;
+}

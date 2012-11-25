@@ -97,7 +97,7 @@ struct glomo_radio_str {
     double     backgroundNoise_mW;   // Pre-calculated to include bandwidth.
     double     backgroundNoise_dBm;  // 
     float      wavelength;
-    
+    double     radiorange;
     BOOL       radioStats;
     BOOL       guiOption;
 
@@ -188,7 +188,8 @@ int GLOMO_RadioGetRadioNumberForWavelength(GlomoNode* node, double wavelength);
 
 
 int GLOMO_RadioGetBandwidthBits(GlomoNode* node, int radioNum);
-                             
+
+double find_radiorange(GlomoRadio *thisRadio, GlomoNode nodeNew);                             
 
 #endif /* _RADIO_H_ */
 
