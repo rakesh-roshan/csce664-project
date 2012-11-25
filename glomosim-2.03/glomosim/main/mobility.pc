@@ -53,7 +53,7 @@
 #include "driver.h"
 #include "glomo.h"
 #include "heap.h"
-
+#include "IGF.h"
 #include "mobility.h"
 #include "mobility_waypoint.h"
 #include "mobility_trace.h"
@@ -249,7 +249,7 @@ void GLOMO_Mobility(GlomoNode *node) {
     
 
     node->position = node->mobilityData.next;
-
+    IGF_updateLocation(node->nodeAddr,node->position);
     if (node->mobilityData.guiOption == TRUE) {
         char simTime[50];
         ctoa(simclock(), simTime);

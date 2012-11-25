@@ -54,7 +54,7 @@
 #include "802_11.h"
 #include "radio.h"
 #include "../main/lookahead.h"
-
+#include "../network/IGF.h"
 /* 
  * Used to force remote nodes to yield longer for the data exchange.
  * Also needed since when packets will arrive at the same time a timer
@@ -2695,6 +2695,7 @@ void Mac802_11TransmitORTSFrame(GlomoNode *node, GlomoMac802_11 *M802)
       &tmpPktPtr, &destAddr);
 
    hdr->sourceposition = node->position;
+   hdr->finalposition = IGF_LocServ_Lookup(destAddr);
    if  (tmpPktPtr ==NULL)
    {
       assert(FALSE); abort();

@@ -533,3 +533,15 @@ GlomoCoordinates IGF_LocServ_Lookup(NODE_ADDR nodeAddr){
   return result_position;
 }
 
+void IGF_updateLocation(NODE_ADDR nodeAddr, GlomoCoordinates position){
+    BOOL wasFound = FALSE;
+    IGF_LOCATION_SERVICE_ENTRY * currEntry;
+    for(currEntry = IGF_global_ls_table.head;currEntry!=NULL;currEntry=currEntry->next){
+        if(currEntry->nodeAddr==nodeAddr){
+            wasFound = TRUE;
+            currEntry->position=position;
+            break;
+        }
+    }
+
+}
