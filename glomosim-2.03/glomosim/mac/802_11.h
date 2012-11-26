@@ -43,7 +43,7 @@
 #ifndef _802_11_H_
 #define _802_11_H_
 
-#define M802_11_SHORT_CTRL_FRAME_SIZE     14
+#define M802_11_SHORT_CTRL_FRAME_SIZE     18
 #define M802_11_LONG_CTRL_FRAME_SIZE      20
 #define M802_11_DATA_FRAME_HDR_SIZE       28
 
@@ -242,6 +242,7 @@ typedef struct _Mac802_11SCtrlFrame
     char Padding[2];            //      0         2
     int duration;               //      2         4
     NODE_ADDR destAddr;         //      6         4
+    NODE_ADDR sourceAddr;       //      6         4
     // char FCS;                //      4         0
 } M802_11ShortControlFrame;     //---------------------
                                 //     14        12
@@ -358,7 +359,7 @@ typedef struct glomo_mac_802_11_str
     NetworkQueueingPriorityType currentPriority;
     
     Message *ORtsMsg;
-    
+    NODE_ADDR CTS_ReceivedFrom;
     
     
 } GlomoMac802_11;
@@ -438,6 +439,7 @@ typedef struct _Mac802_11ORTSCtrlFrame
     
   GlomoCoordinates sourceposition;
   GlomoCoordinates finalposition;
+    double  max_angle;
 
 } M802_11ORTSControlFrame;      //----------------------
                                 //     20        20

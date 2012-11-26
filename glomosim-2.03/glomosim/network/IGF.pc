@@ -404,7 +404,8 @@ void IGF_MakeRoutingDecision(GlomoNode *node,
     // through NetworkIpSendPacketToMacLayer
     // ....
       // TODO
-      nextHop = IGF_GetNextHop(nt,node,destAddr);
+      //nextHop = IGF_GetNextHop(nt,node,destAddr);
+      nextHop = destAddr;
       if(nextHop != 0xffff){
     
           NetworkIpSendPacketToMacLayer(node, msg, DEFAULT_INTERFACE, nextHop);
