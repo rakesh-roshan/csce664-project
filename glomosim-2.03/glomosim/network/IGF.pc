@@ -41,7 +41,7 @@ void RoutingIGFInit(GlomoNode *node,
 	
   //schedule beacon
 
-  retVal = GLOMO_ReadString(node->nodeAddr, nodeInput, 
+  /*retVal = GLOMO_ReadString(node->nodeAddr, nodeInput, 
 			    "IGF_BEACON_INTERVAL", buf);
   if(retVal == FALSE){
     fprintf(stderr, "No IGF_BEACON_INTERVAL in IGF.in\n");
@@ -53,7 +53,7 @@ void RoutingIGFInit(GlomoNode *node,
 
   IGF->numBeacons = 0;
 
-  IGF->beacon_interval = beacon_interval;
+  IGF->beacon_interval = beacon_interval;*/
   *IGFPtr = IGF;
 	
   if(node->nodeAddr == 0) {
@@ -64,7 +64,7 @@ void RoutingIGFInit(GlomoNode *node,
   IGF_InitStats(node);
   IGF_InitNT(&IGF->nt);
 
-  IGF_Enable_ScheduleABeacon(node);
+  //IGF_Enable_ScheduleABeacon(node);
 
 }
 
@@ -258,12 +258,12 @@ void RoutingIGFHandleProtocolEvent(GlomoNode *node, Message *msg){
 
   switch(msg->eventType){
   case MSG_NETWORK_EVENT_IGFScheduleABeacon:{
-    IGF_ScheduleABeacon(node);
+    //IGF_ScheduleABeacon(node);
     GLOMO_MsgFree(node, msg);
     break;
   }
   case MSG_NETWORK_EVENT_IGFStartABeacon:{
-    IGF_SendABeacon(node);
+    //IGF_SendABeacon(node);
     GLOMO_MsgFree(node,msg);
     break;
   }
@@ -271,7 +271,7 @@ void RoutingIGFHandleProtocolEvent(GlomoNode *node, Message *msg){
     // Legacy MSG. Although identical with IGFScheduleABeacon right now,
     // it was designed for a different purpose (i.e., there were a few other
     // things done when this message was received.
-    IGF_ScheduleABeacon(node);
+    //IGF_ScheduleABeacon(node);
     GLOMO_MsgFree(node, msg);
     break;	
   }
@@ -338,6 +338,7 @@ void RoutingIGFRouterFunction(GlomoNode *node,
     *packetWasRouted = TRUE;
   }
 	
+  printf("ROSHAN node %d making routing decision for node %d\n",node->nodeAddr,destAddr);
   IGF_MakeRoutingDecision(node, msg, destAddr);
 }
 
