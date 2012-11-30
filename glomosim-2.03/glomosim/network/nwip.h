@@ -353,6 +353,13 @@ void AddIpHeader(
    NetworkQueueingPriorityType priority,
    unsigned char protocol,
    unsigned int ttl);
+
+void ExpandOrShrinkIpOptionField(
+   GlomoNode* node, 
+   Message* msg,
+   const int optionCode, 
+   const int newIpOptionSize) ;
+
 //---------------------------------------------------------------------------
    
 

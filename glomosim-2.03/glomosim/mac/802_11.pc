@@ -1181,10 +1181,10 @@ void Mac802_11TransmitCTSFrame(GlomoNode *node, GlomoMac802_11 *M802,
    memcpy(pktToRadio->packet, &(newHdr), M802_11_SHORT_CTRL_FRAME_SIZE );
 
    Mac802_11SetState(node, M802, M802_11_X_CTS);
-   printf("ROSHAN node %d(%f,%f) sent CTS to %d(%f,%f) for (%f,%f)\n",
+   /*printf("ROSHAN node %d(%f,%f) sent CTS to %d(%f,%f) for (%f,%f)\n",
           node->nodeAddr,node->position.x,node->position.y, destAddr,
           hdr->sourceposition.x,hdr->sourceposition.y,hdr->finalposition.x,
-          hdr->finalposition.y);
+          hdr->finalposition.y);*/
    StartTransmittingPacket(node, M802, pktToRadio, M802_11_SIFS);
 }
 
@@ -1503,6 +1503,7 @@ void Mac802_11ProcessFrame(
             
             GLOMO_MsgRemoveHeader(node, frame, sizeof(M802_11FrameHdr));
    
+            
             NetworkIpReceivePacketFromMacLayer(node, frame, sourceAddr);
    
             /* Upate sequence number. */
@@ -1685,7 +1686,10 @@ void Mac802_11TransmitORTSFrame(GlomoNode *node, GlomoMac802_11 *M802)
    hdr->destAddr = ANY_DEST;
    hdr->max_angle = 30 * (M802->SSRC+1) % 180;
    M802->waitingForAckOrCtsFromAddress = destAddr;
-   
+   /*if(M802->ORtsMsg == NULL){
+       InitVisitedList(&hdr->nodesVisited);
+   }else{
+   hdr->nodesVisited = ;*/
    if (tmpPktPtr->packetSize <= M802_11_FRAG_THRESH)
    {
       clocktype packetTransmissionDuration =
@@ -1708,7 +1712,7 @@ void Mac802_11TransmitORTSFrame(GlomoNode *node, GlomoMac802_11 *M802)
    }//if//
 
    Mac802_11SetState(node, M802, M802_11_X_ORTS);
-   printf("ROSHAN ORTS packet sent from %d to %d retried %d\n",node->nodeAddr,destAddr,M802->SSRC);
+   //printf("ROSHAN ORTS packet sent from %d to %d retried %d\n",node->nodeAddr,destAddr,M802->SSRC);
    StartTransmittingPacket(
       node, M802, pktToRadio, M802_11_DELAY_UNTIL_SIGNAL_AIRBORN);
 }
@@ -2251,9 +2255,9 @@ void Mac802_11ReceivePacketFromRadio(
    assert(!Mac802_11IsTransmittingState(M802->state));
    if (hdr->destAddr == node->nodeAddr)
    {
-          printf("ROSHAN[SIM: %15s] %d received packet of type %d from %d\n",
+          /*printf("ROSHAN[SIM: %15s] %d received packet of type %d from %d\n",
                  TimeStringInSecond,
-                 node->nodeAddr, hdr->frameType,hdr->sourceAddr);
+                 node->nodeAddr, hdr->frameType,hdr->sourceAddr);*/
       
       switch (hdr->frameType) {
       
@@ -2543,7 +2547,7 @@ void Mac802_11HandleTimeout(GlomoNode *node, GlomoMac802_11 *M802)
 
    case M802_11_S_WFCTS:
       M802->retxDueToCts++;
-      printf("ROSHAN %d time out waiting for CTS\n",node->nodeAddr);
+      //printf("ROSHAN %d time out waiting for CTS\n",node->nodeAddr);
       Mac802_11Retransmit(node, M802);
       break;
 
@@ -2678,7 +2682,7 @@ void Mac802_11Init(
    
    M802->rtsPacketsIgnoredDueToBusyChannel = 0;
    M802->rtsPacketsIgnoredDueToNAV = 0;
-   
+   M802->ORtsMsg = NULL;
    
    
 }
@@ -2781,9 +2785,9 @@ void Mac802_11ProcessORTS(GlomoNode *node, GlomoMac802_11 *M802, Message *msg)
   GlomoCoordinates receiver = node->position;
   GlomoCoordinates destination = hdr->finalposition;
   degree = find_angle(source,receiver,destination);
-  printf("Angle %f-%f between R %d(%f,%f) S(%f,%f) D(%f,%f) \n",
+  /*printf("ROSHAN Angle %f-%f between R %d(%f,%f) S(%f,%f) D(%f,%f) \n",
          degree,hdr->max_angle,node->nodeAddr,receiver.x,receiver.y,
-         source.x,source.y,destination.x,destination.y);
+         source.x,source.y,destination.x,destination.y);*/
   if (degree<hdr->max_angle){
       double progress = sqrt(find_distance2(source,destination))-sqrt(find_distance2(receiver,destination));
       int radioIndex = M802->myGlomoMac->interfaceIndex;
@@ -2812,4 +2816,48 @@ double find_distance2(GlomoCoordinates s, GlomoCoordinates d){
   double ans = pow((s.x-d.x),2)+pow((s.y-d.y),2)+pow((s.z-d.z),2);
   return ans;
   
+}
+
+
+void Free_Visited_Node_List(Visited_Node_List *list)
+{
+    Visited_Node *temp = list->head;
+    while(temp!=NULL){
+        list->head=temp->next;
+        free(temp);
+        temp = list->head;
+        list->size--;
+    }
+    
+}
+
+void AppendNodeToVisitedList(Visited_Node_List *list, NODE_ADDR nodeAddr)
+{
+    Visited_Node *newEntry;
+    if(list == NULL){
+        return;
+    }
+    newEntry = (Visited_Node*)checked_pc_malloc(sizeof(Visited_Node));
+    newEntry->nodeAddr = nodeAddr;
+    newEntry->next = list->head;
+    list->head = newEntry;
+    list->size++;
+}
+
+BOOL LookUp(Visited_Node_List *list, NODE_ADDR nodeAddr)
+{
+    Visited_Node *currEntry = list->head;
+    BOOL found = FALSE;
+    while(currEntry != NULL && !found){
+        if(currEntry->nodeAddr == nodeAddr){
+            found = TRUE;
+        }
+    }
+    return found;
+}
+
+void InitVisitedList(Visited_Node_List *list)
+{
+    list->head = NULL;
+    list->size = 0;
 }

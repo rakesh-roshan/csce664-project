@@ -283,6 +283,25 @@ void RoutingIGFHandleProtocolEvent(GlomoNode *node, Message *msg){
 }
 
 
+NODE_ADDR ConvertRawAddressBytesToNodeAddress(char RawAddressBytes[]) {
+
+   // Done because the address bytes may be out of alignment
+   // on certain processors.
+   
+   NODE_ADDR nodeAddress;
+   memcpy(&nodeAddress, RawAddressBytes, sizeof(NODE_ADDR));
+   return nodeAddress;
+}
+
+void SetRawAddressBytes(NODE_ADDR nodeAddress, char RawAddressBytes[]) 
+{
+   // Done because the address bytes may be out of alignment
+   // on certain processors.
+   
+   memcpy(RawAddressBytes, &nodeAddress, sizeof(NODE_ADDR));
+}
+
+
 //***************************************************************************
 //***************************************************************************
 //***************************************************************************
@@ -310,6 +329,52 @@ void IGF_SendABeacon(GlomoNode * node) {
      node, newMsg, ANY_DEST, CONTROL, IPPROTO_IGF, 1);
 
 }
+
+void IGF_AddToRouteRecord(GlomoNode *node, Message *msg)
+{
+    IpHeaderType *ipHeader = (IpHeaderType *) msg->packet;
+    char* NewRoutePositionPtr;
+   /* Reuse unused IP Option "ptr" field.
+      (minimizes overhead to 4 bytes).
+   */
+   IpOptionsHeaderType* ipOption = FindAnIpOptionField(ipHeader, IPOPT_RR);
+    
+   if (ipOption == NULL) {
+      IpOptionsHeaderType* forSizeof;
+      AddIpOptionField(node, msg, IPOPT_RR,0);
+      ipOption = FindAnIpOptionField((IpHeaderType *) msg->packet, IPOPT_RR);
+   }
+   ExpandOrShrinkIpOptionField(node, msg, IPOPT_RR,((ipOption->len) + sizeof(NODE_ADDR)) );
+   ipOption = FindAnIpOptionField((IpHeaderType *) msg->packet, IPOPT_RR);
+   NewRoutePositionPtr = (char *)ipOption + ipOption->len - sizeof(NODE_ADDR);
+   SetRawAddressBytes(node->nodeAddr,NewRoutePositionPtr);
+}
+
+void DisplayRouteOfPacket(GlomoNode *node, Message *msg) 
+{
+   IpOptionsHeaderType* ipOptions = 
+       FindAnIpOptionField((IpHeaderType*)msg->packet,IPOPT_RR);
+  
+   char temp = ipOptions->ptr;
+   while (temp < ipOptions->len) {
+     
+      // Extract Next Address 
+      // The definition of "ptr" seems to number 1 as the 
+      // first byte of the the options field.
+        
+      char* routeRawAddressBytes = (char*)ipOptions + ipOptions->ptr - 1;
+         
+      NODE_ADDR nextHop = 
+         ConvertRawAddressBytesToNodeAddress(routeRawAddressBytes);
+      
+      // Record Route (Replace next address with this node's address).
+      
+      temp += sizeof(NODE_ADDR);
+
+      printf(" %d -> ",nextHop);
+   } 
+   printf("\n");
+}       
 
 
 //***************************************************************************
@@ -339,6 +404,9 @@ void RoutingIGFRouterFunction(GlomoNode *node,
   }
 	
   printf("ROSHAN node %d making routing decision for node %d\n",node->nodeAddr,destAddr);
+  IGF_AddToRouteRecord(node,msg);
+  printf("ROSHAN node %d received packet has followed route\n",node->nodeAddr);
+  DisplayRouteOfPacket(node,msg);
   IGF_MakeRoutingDecision(node, msg, destAddr);
 }
 

@@ -241,7 +241,6 @@ void AddIpOptionField(
 }
 
 
-static
 void ExpandOrShrinkIpOptionField(
    GlomoNode* node, 
    Message* msg,
@@ -345,7 +344,7 @@ void ExtractIpSourceAndRecordedRoute(
 
 
 typedef struct {
-   NODE_ADDR nextHopAddress;
+    NODE_ADDR nextHopAddress;
 } TackedOnInfoWhileInNetworkQueueType;
 
 

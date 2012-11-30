@@ -427,6 +427,18 @@ void Mac802_11ProcessORTS(GlomoNode *node, GlomoMac802_11 *M802, Message *msg);
 double find_angle(GlomoCoordinates source,GlomoCoordinates receiver,GlomoCoordinates destination);
 double find_distance2(GlomoCoordinates s, GlomoCoordinates d);
 
+typedef struct VisitedNodeEntry
+{
+    NODE_ADDR nodeAddr;
+    struct VisitedNodeEntry *next;
+} Visited_Node;
+
+typedef struct _visited_node_list
+{
+    Visited_Node *head;
+    int size;
+} Visited_Node_List;
+
 typedef struct _Mac802_11ORTSCtrlFrame
 {                               //  Should Be  Actually
     unsigned short frameType;   //      2         2
@@ -439,12 +451,17 @@ typedef struct _Mac802_11ORTSCtrlFrame
     
   GlomoCoordinates sourceposition;
   GlomoCoordinates finalposition;
+    Visited_Node_List nodesVisited;
     double  max_angle;
 
 } M802_11ORTSControlFrame;      //----------------------
                                 //     20        20
 
 
+void Free_Visited_Node_List(Visited_Node_List *list);
+void AppendNodeToVisitedList(Visited_Node_List *list, NODE_ADDR nodeAddr);
+BOOL LookUp(Visited_Node_List *list, NODE_ADDR nodeAddr);
+void InitVisitedList(Visited_Node_List *list);
 
 #endif
 
