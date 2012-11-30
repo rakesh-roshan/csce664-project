@@ -117,5 +117,6 @@ void 	IGF_LocServ_Init();
 void	IGF_LocServ_AddEntry(GlomoNode *node);
 GlomoCoordinates IGF_LocServ_Lookup(NODE_ADDR nodeAddr);
 
+int IGF_GetRouteRecord(Message * msg,NODE_ADDR* nodesarray);
 
 #endif /* _IGF_H */

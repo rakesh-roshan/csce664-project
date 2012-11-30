@@ -451,7 +451,8 @@ typedef struct _Mac802_11ORTSCtrlFrame
     
   GlomoCoordinates sourceposition;
   GlomoCoordinates finalposition;
-    Visited_Node_List nodesVisited;
+    NODE_ADDR nodesVisited[10];
+    int  nodesListLen;
     double  max_angle;
 
 } M802_11ORTSControlFrame;      //----------------------
@@ -462,7 +463,7 @@ void Free_Visited_Node_List(Visited_Node_List *list);
 void AppendNodeToVisitedList(Visited_Node_List *list, NODE_ADDR nodeAddr);
 BOOL LookUp(Visited_Node_List *list, NODE_ADDR nodeAddr);
 void InitVisitedList(Visited_Node_List *list);
-
+BOOL FoundInRouteRecord(GlomoNode * node, Message * msg);
 #endif
 
 

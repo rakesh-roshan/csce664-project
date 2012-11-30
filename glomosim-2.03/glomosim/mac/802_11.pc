@@ -47,6 +47,7 @@
 #include <math.h>
 
 #include "api.h"
+#include "IGF.h"
 #include "structmsg.h"
 #include "fileio.h"
 #include "message.h"
@@ -1667,6 +1668,7 @@ void Mac802_11TransmitORTSFrame(GlomoNode *node, GlomoMac802_11 *M802)
       node, M802->myGlomoMac->interfaceIndex, M802->currentPriority,
       &tmpPktPtr, &destAddr);
 
+
    if  (tmpPktPtr ==NULL)
    {
       assert(FALSE); abort();
@@ -1680,6 +1682,7 @@ void Mac802_11TransmitORTSFrame(GlomoNode *node, GlomoMac802_11 *M802)
    hdr = (M802_11ORTSControlFrame*)pktToRadio->packet;
    hdr->sourceposition = node->position;
    hdr->finalposition = IGF_LocServ_Lookup(destAddr);
+   hdr->nodesListLen = IGF_GetRouteRecord(tmpPktPtr,hdr->nodesVisited);
    
    hdr->frameType = M802_11_ORTS;
    hdr->sourceAddr = node->nodeAddr,
@@ -2253,11 +2256,12 @@ void Mac802_11ReceivePacketFromRadio(
    */
    
    assert(!Mac802_11IsTransmittingState(M802->state));
+   if(hdr->frameType == M802_11_CTS)
+          printf("ROSHAN[SIM: %15s] %d received packet of type %d from %d actual for %d\n",
+                 TimeStringInSecond,
+                 node->nodeAddr, hdr->frameType,hdr->sourceAddr,hdr->destAddr);
    if (hdr->destAddr == node->nodeAddr)
    {
-          /*printf("ROSHAN[SIM: %15s] %d received packet of type %d from %d\n",
-                 TimeStringInSecond,
-                 node->nodeAddr, hdr->frameType,hdr->sourceAddr);*/
       
       switch (hdr->frameType) {
       
@@ -2788,7 +2792,7 @@ void Mac802_11ProcessORTS(GlomoNode *node, GlomoMac802_11 *M802, Message *msg)
   /*printf("ROSHAN Angle %f-%f between R %d(%f,%f) S(%f,%f) D(%f,%f) \n",
          degree,hdr->max_angle,node->nodeAddr,receiver.x,receiver.y,
          source.x,source.y,destination.x,destination.y);*/
-  if (degree<hdr->max_angle){
+  if (degree<hdr->max_angle && !FoundInRouteRecord(node,msg) ){
       double progress = sqrt(find_distance2(source,destination))-sqrt(find_distance2(receiver,destination));
       int radioIndex = M802->myGlomoMac->interfaceIndex;
       double radius = (node->radioData[radioIndex])->radiorange;
@@ -2861,3 +2865,15 @@ void InitVisitedList(Visited_Node_List *list)
     list->head = NULL;
     list->size = 0;
 }
+BOOL FoundInRouteRecord(GlomoNode * node, Message * msg){
+M802_11ORTSControlFrame* hdr = (M802_11ORTSControlFrame*)msg->packet;    
+ int i = 0;
+ 
+ for(i=0;i<hdr->nodesListLen;i++){
+     if(hdr->nodesVisited[i]==node->nodeAddr)
+         return TRUE;
+ }
+ return FALSE;
+
+
+} 

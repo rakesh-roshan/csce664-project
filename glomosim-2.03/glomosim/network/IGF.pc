@@ -1,3 +1,4 @@
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -345,35 +346,37 @@ void IGF_AddToRouteRecord(GlomoNode *node, Message *msg)
       ipOption = FindAnIpOptionField((IpHeaderType *) msg->packet, IPOPT_RR);
    }
    ExpandOrShrinkIpOptionField(node, msg, IPOPT_RR,((ipOption->len) + sizeof(NODE_ADDR)) );
+   //DisplayRouteOfPacket(node,msg);
    ipOption = FindAnIpOptionField((IpHeaderType *) msg->packet, IPOPT_RR);
    NewRoutePositionPtr = (char *)ipOption + ipOption->len - sizeof(NODE_ADDR);
    SetRawAddressBytes(node->nodeAddr,NewRoutePositionPtr);
+   //DisplayRouteOfPacket(node,msg);
 }
 
 void DisplayRouteOfPacket(GlomoNode *node, Message *msg) 
 {
-   IpOptionsHeaderType* ipOptions = 
-       FindAnIpOptionField((IpHeaderType*)msg->packet,IPOPT_RR);
-  
-   char temp = ipOptions->ptr;
-   while (temp < ipOptions->len) {
-     
-      // Extract Next Address 
-      // The definition of "ptr" seems to number 1 as the 
-      // first byte of the the options field.
+    IpOptionsHeaderType* ipOptions = 
+        FindAnIpOptionField((IpHeaderType*)msg->packet,IPOPT_RR);
+    
+    char temp = ipOptions->ptr;
+    while (temp < ipOptions->len) {
         
-      char* routeRawAddressBytes = (char*)ipOptions + ipOptions->ptr - 1;
-         
-      NODE_ADDR nextHop = 
-         ConvertRawAddressBytesToNodeAddress(routeRawAddressBytes);
-      
-      // Record Route (Replace next address with this node's address).
-      
-      temp += sizeof(NODE_ADDR);
-
-      printf(" %d -> ",nextHop);
-   } 
-   printf("\n");
+        // Extract Next Address 
+        // The definition of "ptr" seems to number 1 as the 
+        // first byte of the the options field.
+        
+        char* routeRawAddressBytes = (char*)ipOptions + temp;
+        
+        NODE_ADDR nextHop = 
+            ConvertRawAddressBytesToNodeAddress(routeRawAddressBytes);
+        
+        // Record Route (Replace next address with this node's address).
+        
+        temp += sizeof(NODE_ADDR);
+        
+        printf(" %d -> ",nextHop);
+    } 
+    printf("\n");
 }       
 
 
@@ -615,3 +618,37 @@ void IGF_updateLocation(NODE_ADDR nodeAddr, GlomoCoordinates position){
     }
 
 }
+
+int IGF_GetRouteRecord(Message * msg,NODE_ADDR* nodesarray){
+ IpOptionsHeaderType* ipOptions = 
+        FindAnIpOptionField((IpHeaderType*)msg->packet,IPOPT_RR);
+ int count = 0;
+    char temp = ipOptions->ptr;
+    while (temp < ipOptions->len) {
+         
+        // Extract Next Address 
+        // The definition of "ptr" seems to number 1 as the 
+        // first byte of the the options field.
+        
+        char* routeRawAddressBytes = (char*)ipOptions + temp;
+        
+        NODE_ADDR nextHop = 
+            ConvertRawAddressBytesToNodeAddress(routeRawAddressBytes);
+        
+        // Record Route (Replace next address with this node's address).
+        
+        temp += sizeof(NODE_ADDR);
+        
+        *nodesarray = nextHop;
+        nodesarray += 1;
+        count++;
+    } 
+    return count;
+
+
+
+
+
+}
+
+
