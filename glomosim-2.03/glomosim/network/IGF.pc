@@ -170,7 +170,28 @@ void RoutingIGFHandleProtocolPacket(GlomoNode *node, Message *msg,
   }
   }
 }
+//anku
+void IGF_UpdateRoutingTable(GlomoNode * node, NODE_ADDR destaddr, NODE_ADDR nextHop){
+    BOOL found = FALSE;
+    GlomoNetworkIp *ipLayer = (GlomoNetworkIp *) node->networkData.networkVar;
+    GlomoRoutingIGF *IGF = (GlomoRoutingIGF *) ipLayer->routingProtocol;
+    IGF_RT *rt = &(IGF->routeTable);
+    IGF_RT_Node *currEntry,*newEntry;
+    for(currEntry=rt->head;currEntry!=NULL;currEntry=currEntry->next){
+        if(currEntry->destAddr==destaddr){
+            currEntry->nextHop = nextHop;
+            found = TRUE;
+     }
 
+ }
+    if(found==FALSE){
+        newEntry = checked_pc_malloc(sizeof(IGF_RT_Node)); 
+        newEntry->destAddr = destaddr;
+        newEntry->nextHop = nextHop;
+        IGF_AddEntryIntoRT(rt,newEntry);
+    }
+
+}
 //***************************************************************************
 //***************************************************************************
 //***************************************************************************
@@ -241,6 +262,28 @@ void IGF_AddAEntryIntoNT(IGF_NT *nt, IGF_NT_ENTRY *newEntry) {
   newEntry->next = NULL;
   nt->size++;
 }
+//anku
+void IGF_AddEntryIntoRT(IGF_RT *rt,IGF_RT_Node *newrtEntry){
+    IGF_RT_Node * currEntry;
+    IGF_RT_Node * rear;
+    if(rt->head == NULL){
+        rt->head = newrtEntry;
+        newrtEntry->next = NULL;
+        rt->size ++;
+        return;
+    }
+    for(currEntry = rt->head;currEntry != NULL;currEntry = currEntry->next){
+        rear = currEntry;
+     }
+    rear->next = newrtEntry;
+    newrtEntry->next = NULL;
+    rt->size++;
+
+
+}
+
+
+
 
 //***************************************************************************
 //***************************************************************************
@@ -248,6 +291,12 @@ void IGF_AddAEntryIntoNT(IGF_NT *nt, IGF_NT_ENTRY *newEntry) {
 void IGF_InitNT(IGF_NT * nt){
   nt->head = NULL;
   nt->size = 0;
+}
+
+//anku
+void IGF_InitRT(IGF_RT * rt){
+    rt->head = NULL;
+    rt->size = 0;
 }
 
 //***************************************************************************
@@ -489,6 +538,12 @@ void IGF_MakeRoutingDecision(GlomoNode *node,
       }
   }
 }
+NODE_ADDR IGF_GetFinalDestAddr(Message *msg){
+IpHeaderType *ipHeader = (IpHeaderType *) msg->packet;
+ return ipHeader->ip_dst;
+
+}
+
 
 //***************************************************************************
 //***************************************************************************

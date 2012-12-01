@@ -445,7 +445,7 @@ typedef struct _Mac802_11ORTSCtrlFrame
     char Padding[2];            //      0         2
     int duration;               //      2         4 
     NODE_ADDR destAddr;         //      6         4
-    
+    NODE_ADDR finalAddr;
     NODE_ADDR sourceAddr;       //      6         4
     char FCS[4];                //      4         4
     

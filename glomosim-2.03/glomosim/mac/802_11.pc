@@ -1683,7 +1683,7 @@ void Mac802_11TransmitORTSFrame(GlomoNode *node, GlomoMac802_11 *M802)
    hdr->sourceposition = node->position;
    hdr->finalposition = IGF_LocServ_Lookup(destAddr);
    hdr->nodesListLen = IGF_GetRouteRecord(tmpPktPtr,hdr->nodesVisited);
-   
+   hdr->finalAddr = IGF_GetFinalDestAddr(tmpPktPtr);//check
    hdr->frameType = M802_11_ORTS;
    hdr->sourceAddr = node->nodeAddr,
    hdr->destAddr = ANY_DEST;
@@ -1813,12 +1813,13 @@ void Mac802_11TransmitDataFrame(GlomoNode *node, GlomoMac802_11 *M802)
 {
    NODE_ADDR destAddr;
    Message* topPacket;
-   
+   NODE_ADDR finaldest;
    NetworkIpOutputQueueTopPacketForAPriority(
       node, M802->myGlomoMac->interfaceIndex, M802->currentPriority,
       &topPacket, &destAddr);
    assert(topPacket != NULL);
-   
+   finaldest = IGF_GetFinalDestAddr(topPacket); 
+   IGF_UpdateRoutingTable(node,finaldest,destAddr);
    if (destAddr == ANY_DEST) {
       NODE_ADDR NotUsed;
       Message* dequeuedPacket;
@@ -2266,6 +2267,7 @@ void Mac802_11ReceivePacketFromRadio(
       switch (hdr->frameType) {
       
       case M802_11_CTS:
+          
          assert(M802->state == M802_11_S_WFCTS);
          Mac802_11CancelTimer(node, M802);
          
@@ -2877,3 +2879,7 @@ M802_11ORTSControlFrame* hdr = (M802_11ORTSControlFrame*)msg->packet;
 
 
 } 
+NODE_ADDR getFinalDestAddr(Message *msg){
+ M802_11ORTSControlFrame * hdr = (M802_11ORTSControlFrame *)msg->packet;
+ return hdr->finalAddr;
+}

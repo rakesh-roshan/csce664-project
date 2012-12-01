@@ -8,6 +8,7 @@
 typedef struct RTEntry
 {
     NODE_ADDR destAddr;
+    NODE_ADDR nextHop;
     struct RTEntry *next;
 } IGF_RT_Node;
 
@@ -118,5 +119,6 @@ void	IGF_LocServ_AddEntry(GlomoNode *node);
 GlomoCoordinates IGF_LocServ_Lookup(NODE_ADDR nodeAddr);
 
 int IGF_GetRouteRecord(Message * msg,NODE_ADDR* nodesarray);
-
+void IGF_UpdateRoutingTable(GlomoNode *node,NODE_ADDR destaddr,NODE_ADDR nexthop);
+void IGF_AddEntryIntoRT(IGF_RT *rt, IGF_RT_Node *newrtEntry);
 #endif /* _IGF_H */
