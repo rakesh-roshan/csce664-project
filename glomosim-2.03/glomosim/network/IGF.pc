@@ -406,10 +406,10 @@ void RoutingIGFRouterFunction(GlomoNode *node,
     *packetWasRouted = TRUE;
   }
 	
-  printf("ROSHAN node %d making routing decision for node %d\n",node->nodeAddr,destAddr);
+  //printf("ROSHAN node %d making routing decision for node %d\n",node->nodeAddr,destAddr);
   IGF_AddToRouteRecord(node,msg);
-  printf("ROSHAN node %d received packet has followed route\n",node->nodeAddr);
-  DisplayRouteOfPacket(node,msg);
+  //printf("ROSHAN node %d received packet has followed route\n",node->nodeAddr);
+  //DisplayRouteOfPacket(node,msg);
   IGF_MakeRoutingDecision(node, msg, destAddr);
 }
 

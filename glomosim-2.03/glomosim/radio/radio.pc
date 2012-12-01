@@ -362,6 +362,7 @@ void GLOMO_RadioCreateARadioForMacLayer(
             abort();
             break;
     }/*switch*/
+    node->radioData[radioIndex]->radiorange = radiorange;
     
 }//GLOMO_RadioCreateARadioForMacLayer//
 

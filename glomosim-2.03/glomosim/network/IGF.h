@@ -8,6 +8,7 @@
 typedef struct RTEntry
 {
     NODE_ADDR destAddr;
+    NODE_ADDR nextHop;
     struct RTEntry *next;
 } IGF_RT_Node;
 
