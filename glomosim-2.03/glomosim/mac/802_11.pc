@@ -858,6 +858,23 @@ void Mac802_11RTSTransmitted(GlomoNode *node, GlomoMac802_11 *M802)
    Mac802_11StartTimer(node, M802, holdForCts);
 }
 
+static 
+void Mac802_11ORTSTransmitted(GlomoNode *node, GlomoMac802_11 *M802)
+{
+   clocktype holdForCts;
+
+   Mac802_11SetState(node, M802, M802_11_S_WFCTS);
+
+   holdForCts = 
+      M802->extraPropDelay +
+      M802_11_DIFS + 
+      M802->ctsOrAckTransmissionDuration +
+      M802->extraPropDelay +
+      M802_11_SLOT_TIME;
+   
+   Mac802_11StartTimer(node, M802, holdForCts);
+}
+
 
 /*
  * NAME:        Mac802_11PauseBackoff.
@@ -922,8 +939,8 @@ void Mac802_11ProcessNotMyFrame(
       assert(M802->state != M802_11_S_NAV_RTS_CHECK_MODE);
       
       if(isACtsPacket && M802->state==M802_11_X_RCV_ORTS_ELIGIBLE_CTS){
-          printf("ROSHAN[SIM: %15s] node %d cancelled timer\n",
-                 TimeStringInSecond,node->nodeAddr);
+          //printf("ROSHAN[SIM: %15s] node %d cancelled timer\n",
+          //       TimeStringInSecond,node->nodeAddr);
           Mac802_11CancelTimer(node, M802);
           Mac802_11SetState(node, M802, M802_11_S_IDLE);
       }
@@ -1127,7 +1144,7 @@ BOOL Mac802_11CorrectSeqenceNumber(
 
    entry = Mac802_11GetSeqNo(node, M802, sourceAddr);
    assert(entry);
-
+   printf("%d == %d\n",entry->fromSeqNo,seqNo);
    return (entry->fromSeqNo == seqNo);
 }
 
@@ -1154,6 +1171,8 @@ void Mac802_11TransmitCTSFrame(GlomoNode *node, GlomoMac802_11 *M802,
    int macPktLen;
    M802_11ORTSControlFrame *hdr = (M802_11ORTSControlFrame *)Rts->packet;
    M802_11ShortControlFrame newHdr;
+   char TimeStringInSecond[GLOMO_MAX_STRING_LENGTH];
+   GLOMO_PrintClockInSecond(simclock(), TimeStringInSecond);
 
    destAddr = hdr->sourceAddr;
 
@@ -1182,11 +1201,28 @@ void Mac802_11TransmitCTSFrame(GlomoNode *node, GlomoMac802_11 *M802,
    memcpy(pktToRadio->packet, &(newHdr), M802_11_SHORT_CTRL_FRAME_SIZE );
 
    Mac802_11SetState(node, M802, M802_11_X_CTS);
-   /*printf("ROSHAN node %d(%f,%f) sent CTS to %d(%f,%f) for (%f,%f)\n",
+   //if(destAddr == 15)
+   /*printf("ROSHAN[%15s] node %d(%f,%f) sent CTS to %d(%f,%f) for (%f,%f)\n",TimeStringInSecond,
           node->nodeAddr,node->position.x,node->position.y, destAddr,
           hdr->sourceposition.x,hdr->sourceposition.y,hdr->finalposition.x,
-          hdr->finalposition.y);*/
-   StartTransmittingPacket(node, M802, pktToRadio, M802_11_SIFS);
+          hdr->finalposition.y);
+   */StartTransmittingPacket(node, M802, pktToRadio, M802_11_SIFS);
+}
+
+
+static 
+void Mac802_11TransmitOCTSFrame(GlomoNode *node, GlomoMac802_11 *M802,
+                               Message *Rts)
+{
+    if (RadioStatus(node, M802) == RADIO_IDLE) {
+
+        Mac802_11TransmitCTSFrame(node,M802,M802->ORtsMsg);
+    }else{
+        printf("ROSHAN %d canceling its timer\n",node->nodeAddr);
+        Mac802_11CancelTimer(node, M802);
+        Mac802_11SetState(node, M802, M802_11_S_IDLE);
+    }
+
 }
 
 
@@ -1495,6 +1531,7 @@ void Mac802_11ProcessFrame(
       else
       {
          Mac802_11CancelTimer(node, M802);
+         //printf("ROSHAN %d(%d) received data from %d sent to IP \n",node->nodeAddr,M802->state,sourceAddr);
          Mac802_11TransmitAck(node, M802, frame);
    
          if (Mac802_11CorrectSeqenceNumber(node, M802, hdr->sourceAddr,
@@ -1850,15 +1887,15 @@ void Mac802_11TransmitDataFrame(GlomoNode *node, GlomoMac802_11 *M802)
       SeqNoEntry *entry;
       M802_11FrameHdr hdr;
       Message* pktToRadio = GLOMO_MsgAlloc(node, 0, 0, 0);
-      
+      destAddr = M802->CTS_ReceivedFrom;
       hdr.frameType = M802_11_DATA;
       hdr.sourceAddr = node->nodeAddr;
-      hdr.destAddr = M802->CTS_ReceivedFrom;
+      hdr.destAddr = destAddr;
       M802->waitingForAckOrCtsFromAddress = destAddr;
-   
       entry = Mac802_11GetSeqNo(node, M802, destAddr);
       assert(entry);
       hdr.seqNo = entry->toSeqNo;
+      //printf("ROSHAN sending data from %d to %d with seq no %d\n",node->nodeAddr,destAddr,entry->toSeqNo);
       hdr.duration = 
          M802->extraPropDelay + M802_11_SIFS + 
          M802->ctsOrAckTransmissionDuration +
@@ -2055,7 +2092,7 @@ void TransmissionHasFinished(
       break;
    
    case M802_11_X_ORTS:
-      Mac802_11RTSTransmitted(node, M802);
+      Mac802_11ORTSTransmitted(node, M802);
       break;
    
    case M802_11_X_CTS:
@@ -2257,11 +2294,10 @@ void Mac802_11ReceivePacketFromRadio(
    */
    
    assert(!Mac802_11IsTransmittingState(M802->state));
-   if(hdr->frameType == M802_11_CTS)
-          printf("ROSHAN[SIM: %15s] %d received packet of type %d from %d actual for %d\n",
+   /*printf("ROSHAN[SIM: %15s] %d received packet of type %d from %d actual for %d\n",
                  TimeStringInSecond,
                  node->nodeAddr, hdr->frameType,hdr->sourceAddr,hdr->destAddr);
-   if (hdr->destAddr == node->nodeAddr)
+   */if (hdr->destAddr == node->nodeAddr)
    {
       
       switch (hdr->frameType) {
@@ -2566,7 +2602,7 @@ void Mac802_11HandleTimeout(GlomoNode *node, GlomoMac802_11 *M802)
       Mac802_11RetransmitFrag(node, M802);
       break;
    case M802_11_X_RCV_ORTS_ELIGIBLE_CTS:
-       Mac802_11TransmitCTSFrame(node,M802,M802->ORtsMsg);
+       Mac802_11TransmitOCTSFrame(node,M802,M802->ORtsMsg);
        GLOMO_MsgFree(node,M802->ORtsMsg);
        M802->ORtsMsg = NULL;
        break;
@@ -2778,8 +2814,8 @@ void Mac802_11Finalize(GlomoNode *node, int interfaceIndex)
 
 
 clocktype find_delay(double progress,double radius){
-    clocktype f;
-    f=(0.8*(1-(progress/radius))+0.2*rand());
+    double f;
+    f=(.5*(1-(progress/radius))+0.5*rand()/RAND_MAX);
     return M802_11_SIFS+(M802_11_DIFS-M802_11_SIFS)*f;
 
 }
@@ -2790,16 +2826,20 @@ void Mac802_11ProcessORTS(GlomoNode *node, GlomoMac802_11 *M802, Message *msg)
   GlomoCoordinates source = hdr->sourceposition;
   GlomoCoordinates receiver = node->position;
   GlomoCoordinates destination = hdr->finalposition;
+   char TimeStringInSecond[GLOMO_MAX_STRING_LENGTH];
+   GLOMO_PrintClockInSecond(simclock(), TimeStringInSecond);
   degree = find_angle(source,receiver,destination);
-  /*printf("ROSHAN Angle %f-%f between R %d(%f,%f) S(%f,%f) D(%f,%f) \n",
-         degree,hdr->max_angle,node->nodeAddr,receiver.x,receiver.y,
-         source.x,source.y,destination.x,destination.y);*/
+  /*if(hdr->sourceAddr == 15)
+      printf("ROSHAN Angle %f-%f between R %d(%f,%f) S(%f,%f) D(%f,%f) \n",
+             degree,hdr->max_angle,node->nodeAddr,receiver.x,receiver.y,
+             source.x,source.y,destination.x,destination.y);*/
   if (degree<hdr->max_angle && !FoundInRouteRecord(node,msg) ){
       double progress = sqrt(find_distance2(source,destination))-sqrt(find_distance2(receiver,destination));
       int radioIndex = M802->myGlomoMac->interfaceIndex;
       double radius = (node->radioData[radioIndex])->radiorange;
       
       clocktype timerDelay = find_delay(progress,radius);
+      //printf("ROSHAN[%15s] Node %d eligible to send CTS to %d with backoff %lld< %lld < %lld\n",TimeStringInSecond,node->nodeAddr,hdr->sourceAddr,M802_11_SIFS,timerDelay,M802_11_DIFS);
       Mac802_11SetState(node,M802,M802_11_X_RCV_ORTS_ELIGIBLE_CTS);
       M802->ORtsMsg = msg;
       Mac802_11StartTimer(node,M802,timerDelay);
