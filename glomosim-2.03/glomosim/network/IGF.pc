@@ -497,7 +497,7 @@ void IGF_MakeRoutingDecision(GlomoNode *node,
   GlomoNetworkIp * ipLayer = (GlomoNetworkIp *)node->networkData.networkVar;
   GlomoRoutingIGF * IGF = (GlomoRoutingIGF *)ipLayer->routingProtocol;
   IpHeaderType * ipHeader = (IpHeaderType *) msg->packet;
-  IGF_NT *nt = &(IGF->nt);
+  IGF_RT *rt = &(IGF->routeTable);
   NODE_ADDR nextHop;
   char 	TimeStringInSecond[GLOMO_MAX_STRING_LENGTH];
   GLOMO_PrintClockInSecond(simclock(), TimeStringInSecond);
@@ -525,8 +525,8 @@ void IGF_MakeRoutingDecision(GlomoNode *node,
     // through NetworkIpSendPacketToMacLayer
     // ....
       // TODO
-      //nextHop = IGF_GetNextHop(nt,node,destAddr);
-      nextHop = destAddr;
+      nextHop = IGF_GetNextHop(rt,node,destAddr);
+      //nextHop = destAddr;
       if(nextHop != 0xffff){
     
           NetworkIpSendPacketToMacLayer(node, msg, DEFAULT_INTERFACE, nextHop);
@@ -548,41 +548,21 @@ IpHeaderType *ipHeader = (IpHeaderType *) msg->packet;
 //***************************************************************************
 //***************************************************************************
 //***************************************************************************
-NODE_ADDR IGF_GetNextHop(IGF_NT *nt, GlomoNode * node, NODE_ADDR destAddr) {
+NODE_ADDR IGF_GetNextHop(IGF_RT *rt, GlomoNode * node, NODE_ADDR destAddr) {
 
-  IGF_NT_ENTRY *curr_nt_entry;
-  NODE_ADDR nextHop = 0xffff;
-  GlomoCoordinates destPosition = IGF_LocServ_Lookup(destAddr);
-  double minDistance = IGF_GetDistance(node->position, destPosition);
-  double currDistance;
+  IGF_RT_Node *curr_rt_entry;
+  NODE_ADDR nextHop = destAddr;
   char TimeStringInSecond[GLOMO_MAX_STRING_LENGTH];
-  GlomoCoordinates nextHopPosition = node->position;
-  GLOMO_PrintClockInSecond(simclock(), TimeStringInSecond);
 
-  // Get the next hop, closer to the destination than me
-  // ...
-  //
-#ifdef IGF_DEBUG
-  //printf("[SIM: %15s] IGF--Node %d finding nbr nearest to %d \n",TimeStringInSecond,
-  //               node->nodeAddr,destAddr);
-#endif
-  for(curr_nt_entry=nt->head;curr_nt_entry!=NULL;curr_nt_entry=curr_nt_entry->next){
-      currDistance = IGF_GetDistance(curr_nt_entry->neighborPosition,destPosition);
-#ifdef IGF_DEBUG
-      //printf("[SIM: %15s] IGF--Node %d <-> %d : %f|%d <-> %d : %f \n",TimeStringInSecond,
-      //           node->nodeAddr,curr_nt_entry->neighborID,currDistance,
-      //           node->nodeAddr,nextHop,minDistance);
-#endif
-      if(currDistance < minDistance){
-          minDistance = currDistance;
-          nextHop = curr_nt_entry->neighborID;
-          nextHopPosition = curr_nt_entry->neighborPosition;
+  for(curr_rt_entry=rt->head;curr_rt_entry!=NULL;curr_rt_entry=curr_rt_entry->next){
+      if(curr_rt_entry->destAddr == destAddr){
+          nextHop = curr_rt_entry->nextHop;
+          break;
       }
   }
 #ifdef IGF_DEBUG
-          printf("[SIM: %15s] IGF--Node %d sends out a packet to node %d via neighbor %d(%f,%f,%f) \n",
-                 TimeStringInSecond,node->nodeAddr,destAddr,nextHop,nextHopPosition.x,
-                 nextHopPosition.y,nextHopPosition.z);
+          printf("[SIM: %15s] IGF--Node %d sends out a packet to node %d via node %d \n",
+                 TimeStringInSecond,node->nodeAddr,destAddr,nextHop);
 #endif
   return nextHop;
 }

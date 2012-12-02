@@ -74,6 +74,7 @@ typedef enum
     M802_11_S_WF_DIFS_OR_EIFS,      // 2
     M802_11_S_BO,                   // 3
     M802_11_S_NAV_RTS_CHECK_MODE,   // 4
+    M802_11_X_RCV_ORTS_ELIGIBLE_CTS, //anku
 
     // Waiting For Response States
     // Make consistent with Mac802_11InWaitingForResponseState()
@@ -81,6 +82,7 @@ typedef enum
     M802_11_S_WFCTS,            // 5 First State in range
     M802_11_S_WFDATA,           // 6
     M802_11_S_WFACK,            // 7 
+    //    M802_11_S_WFOCTS,            // 5 First State in range
     M802_11_S_WFFRAGACK,        // 8 Last State in range
    
     // Transmission States:
@@ -92,9 +94,8 @@ typedef enum
     M802_11_X_BROADCAST,        // 12
     M802_11_X_FRAGMENT,         // 13
     M802_11_X_ACK,              // 14  
-    M802_11_X_FRAGACK,           // 15  Last State in range
-    M802_11_X_RCV_ORTS_ELIGIBLE_CTS, //anku
-    M802_11_X_ORTS
+    M802_11_X_ORTS,
+    M802_11_X_FRAGACK           // 15  Last State in range
 } M802_11_MacStates;
 
 
@@ -360,7 +361,7 @@ typedef struct glomo_mac_802_11_str
     
     Message *ORtsMsg;
     NODE_ADDR CTS_ReceivedFrom;
-    
+    BOOL    RTS_Sent;
     
 } GlomoMac802_11;
 

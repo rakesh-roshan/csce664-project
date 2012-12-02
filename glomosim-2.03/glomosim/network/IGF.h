@@ -105,7 +105,7 @@ void IGF_HandleABeaconPacket(GlomoNode * node, Message* msg);
 void IGF_MakeRoutingDecision(GlomoNode *	node, 
 			    Message * msg, NODE_ADDR destAddr);
 
-NODE_ADDR IGF_GetNextHop(IGF_NT *nt, GlomoNode * node, NODE_ADDR destAddr);
+NODE_ADDR IGF_GetNextHop(IGF_RT *rt, GlomoNode * node, NODE_ADDR destAddr);
 
 double IGF_GetDistance(GlomoCoordinates sourceAddr, GlomoCoordinates destAddr);
 
@@ -121,4 +121,5 @@ GlomoCoordinates IGF_LocServ_Lookup(NODE_ADDR nodeAddr);
 int IGF_GetRouteRecord(Message * msg,NODE_ADDR* nodesarray);
 void IGF_UpdateRoutingTable(GlomoNode *node,NODE_ADDR destaddr,NODE_ADDR nexthop);
 void IGF_AddEntryIntoRT(IGF_RT *rt, IGF_RT_Node *newrtEntry);
+NODE_ADDR IGF_GetFinalDestAddr(Message *msg);
 #endif /* _IGF_H */
