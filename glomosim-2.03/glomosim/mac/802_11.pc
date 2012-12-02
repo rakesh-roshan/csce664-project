@@ -2880,7 +2880,7 @@ void Mac802_11Finalize(GlomoNode *node, int interfaceIndex)
 
 clocktype find_delay(double progress,double radius){
     double f;
-    f=(.5*(1-(progress/radius))+0.5*rand()/RAND_MAX);
+    f=(.1*(1-(progress/radius))+0.9*rand()/RAND_MAX);
     return M802_11_SIFS+(M802_11_DIFS-M802_11_SIFS)*f;
 
 }
