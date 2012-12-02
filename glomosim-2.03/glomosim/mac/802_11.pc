@@ -862,16 +862,21 @@ static
 void Mac802_11ORTSTransmitted(GlomoNode *node, GlomoMac802_11 *M802)
 {
    clocktype holdForCts;
+   char TimeStringInSecond[GLOMO_MAX_STRING_LENGTH],Time2[GLOMO_MAX_STRING_LENGTH];
+   
+   GLOMO_PrintClockInSecond(simclock(), TimeStringInSecond);
 
    Mac802_11SetState(node, M802, M802_11_S_WFCTS);
 
    holdForCts = 
       M802->extraPropDelay +
       M802_11_DIFS + 
+      M802_11_SIFS + 
       M802->ctsOrAckTransmissionDuration +
       M802->extraPropDelay +
       M802_11_SLOT_TIME;
-   
+   GLOMO_PrintClockInSecond(holdForCts, Time2);
+   //printf("ROSHAN[SIM: %15s] node %d waiting for %15s for CTS \n",TimeStringInSecond,node->nodeAddr,Time2);
    Mac802_11StartTimer(node, M802, holdForCts);
 }
 
@@ -1205,8 +1210,8 @@ void Mac802_11TransmitCTSFrame(GlomoNode *node, GlomoMac802_11 *M802,
    /*printf("ROSHAN[%15s] node %d(%f,%f) sent CTS to %d(%f,%f) for (%f,%f)\n",TimeStringInSecond,
           node->nodeAddr,node->position.x,node->position.y, destAddr,
           hdr->sourceposition.x,hdr->sourceposition.y,hdr->finalposition.x,
-          hdr->finalposition.y);
-   */StartTransmittingPacket(node, M802, pktToRadio, M802_11_SIFS);
+          hdr->finalposition.y);*/
+   StartTransmittingPacket(node, M802, pktToRadio, M802_11_SIFS);
 }
 
 
@@ -1218,7 +1223,7 @@ void Mac802_11TransmitOCTSFrame(GlomoNode *node, GlomoMac802_11 *M802,
 
         Mac802_11TransmitCTSFrame(node,M802,M802->ORtsMsg);
     }else{
-        printf("ROSHAN %d canceling its timer\n",node->nodeAddr);
+        //printf("ROSHAN %d canceling its timer\n",node->nodeAddr);
         Mac802_11CancelTimer(node, M802);
         Mac802_11SetState(node, M802, M802_11_S_IDLE);
     }
@@ -1700,6 +1705,8 @@ void Mac802_11TransmitORTSFrame(GlomoNode *node, GlomoMac802_11 *M802)
    Message *pktToRadio;
    Message *tmpPktPtr;
    NODE_ADDR destAddr;
+   char TimeStringInSecond[GLOMO_MAX_STRING_LENGTH];
+   GLOMO_PrintClockInSecond(simclock(), TimeStringInSecond);
 
    NetworkIpOutputQueueTopPacketForAPriority(
       node, M802->myGlomoMac->interfaceIndex, M802->currentPriority,
@@ -1752,7 +1759,7 @@ void Mac802_11TransmitORTSFrame(GlomoNode *node, GlomoMac802_11 *M802)
    }//if//
 
    Mac802_11SetState(node, M802, M802_11_X_ORTS);
-   //printf("ROSHAN ORTS packet sent from %d to %d retried %d\n",node->nodeAddr,destAddr,M802->SSRC);
+   //printf("ROSHAN[SIM: %15s] ORTS packet sent from %d to %d retried %d\n",TimeStringInSecond,node->nodeAddr,destAddr,M802->SSRC);
    StartTransmittingPacket(
       node, M802, pktToRadio, M802_11_DELAY_UNTIL_SIGNAL_AIRBORN);
 }
@@ -2302,6 +2309,8 @@ void Mac802_11ReceivePacketFromRadio(
       switch (hdr->frameType) {
       
       case M802_11_CTS:
+          if(M802->state != M802_11_S_WFCTS)
+              printf("ROSHAN[SIM: %15s] node %d received CTS from %d state %d\n",TimeStringInSecond,node->nodeAddr,hdr->sourceAddr,M802->state);
          assert(M802->state == M802_11_S_WFCTS);
          Mac802_11CancelTimer(node, M802);
          
@@ -2545,7 +2554,9 @@ static
 void Mac802_11HandleTimeout(GlomoNode *node, GlomoMac802_11 *M802)
 {
    
-   
+    char TimeStringInSecond[GLOMO_MAX_STRING_LENGTH];
+    GLOMO_PrintClockInSecond(simclock(), TimeStringInSecond);
+
    switch (M802->state) {
    
    case M802_11_S_WF_DIFS_OR_EIFS:
@@ -2587,7 +2598,7 @@ void Mac802_11HandleTimeout(GlomoNode *node, GlomoMac802_11 *M802)
 
    case M802_11_S_WFCTS:
       M802->retxDueToCts++;
-      //printf("ROSHAN %d time out waiting for CTS\n",node->nodeAddr);
+      printf("ROSHAN[SIM: %15s] %d time out waiting for CTS\n",TimeStringInSecond,node->nodeAddr);
       Mac802_11Retransmit(node, M802);
       break;
 
@@ -2813,7 +2824,8 @@ void Mac802_11Finalize(GlomoNode *node, int interfaceIndex)
 
 clocktype find_delay(double progress,double radius){
     double f;
-    f=(.5*(1-(progress/radius))+0.5*rand()/RAND_MAX);
+    f=(.2
+*(1-(progress/radius))+0.9*rand()/RAND_MAX);
     return M802_11_SIFS+(M802_11_DIFS-M802_11_SIFS)*f;
 
 }
@@ -2824,7 +2836,7 @@ void Mac802_11ProcessORTS(GlomoNode *node, GlomoMac802_11 *M802, Message *msg)
   GlomoCoordinates source = hdr->sourceposition;
   GlomoCoordinates receiver = node->position;
   GlomoCoordinates destination = hdr->finalposition;
-   char TimeStringInSecond[GLOMO_MAX_STRING_LENGTH];
+  char TimeStringInSecond[GLOMO_MAX_STRING_LENGTH],Time2[GLOMO_MAX_STRING_LENGTH],Time3[GLOMO_MAX_STRING_LENGTH],Time4[GLOMO_MAX_STRING_LENGTH];
    GLOMO_PrintClockInSecond(simclock(), TimeStringInSecond);
   degree = find_angle(source,receiver,destination);
   /*if(hdr->sourceAddr == 15)
@@ -2837,7 +2849,11 @@ void Mac802_11ProcessORTS(GlomoNode *node, GlomoMac802_11 *M802, Message *msg)
       double radius = (node->radioData[radioIndex])->radiorange;
       
       clocktype timerDelay = find_delay(progress,radius);
-      //printf("ROSHAN[%15s] Node %d eligible to send CTS to %d with backoff %lld< %lld < %lld\n",TimeStringInSecond,node->nodeAddr,hdr->sourceAddr,M802_11_SIFS,timerDelay,M802_11_DIFS);
+      GLOMO_PrintClockInSecond(M802_11_SIFS, Time2);
+      GLOMO_PrintClockInSecond(timerDelay, Time3);
+      GLOMO_PrintClockInSecond(M802_11_DIFS, Time4);
+
+      //printf("ROSHAN[%15s] Node %d eligible to send CTS to %d with backoff %15s< %15s < %15s\n",TimeStringInSecond,node->nodeAddr,hdr->sourceAddr,Time2,Time3,Time4);
       Mac802_11SetState(node,M802,M802_11_X_RCV_ORTS_ELIGIBLE_CTS);
       M802->ORtsMsg = msg;
       Mac802_11StartTimer(node,M802,timerDelay);
