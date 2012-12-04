@@ -1690,7 +1690,7 @@ void Mac802_11ContinueBackoff(GlomoNode *node, GlomoMac802_11 *M802)
       char clockStr[GLOMO_MAX_STRING_LENGTH];
       ctoa(M802->BO, clockStr);
       // printf("Node %ld continuing backoff to a negative timer: %s\n",
-             node->nodeAddr, clockStr);
+      //    node->nodeAddr, clockStr);
       exit(0);
    }
 
@@ -2372,7 +2372,7 @@ void Mac802_11ReceivePacketFromRadio(
       
       default:
           //printf("MAC_802_11: Unknown frame type %d\n",
-                hdr->frameType);
+          //hdr->frameType);
          assert(FALSE); abort();
       }/*switch*/
    }
@@ -2394,7 +2394,7 @@ void Mac802_11ReceivePacketFromRadio(
       
       default:
           // printf("MAC_802_11: Unknown frame type %d\n",
-                hdr->frameType);
+          //     hdr->frameType);
          assert(FALSE); abort();
       }/*switch*/
    }
@@ -2619,7 +2619,7 @@ void Mac802_11HandleTimeout(GlomoNode *node, GlomoMac802_11 *M802)
        break;
    default:
        // printf("MAC_802_11: Node %u got unknown state type %d",
-             node->nodeAddr, M802->state);
+       //             node->nodeAddr, M802->state);
 
       assert(FALSE);  abort();
    }
