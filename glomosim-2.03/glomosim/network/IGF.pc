@@ -394,11 +394,20 @@ void IGF_AddToRouteRecord(GlomoNode *node, Message *msg)
       AddIpOptionField(node, msg, IPOPT_RR,0);
       ipOption = FindAnIpOptionField((IpHeaderType *) msg->packet, IPOPT_RR);
    }
-   ExpandOrShrinkIpOptionField(node, msg, IPOPT_RR,((ipOption->len) + sizeof(NODE_ADDR)) );
+   if(ipOption->len<60){
+       ExpandOrShrinkIpOptionField(node, msg, IPOPT_RR,((ipOption->len) + sizeof(NODE_ADDR)) );
    //DisplayRouteOfPacket(node,msg);
-   ipOption = FindAnIpOptionField((IpHeaderType *) msg->packet, IPOPT_RR);
-   NewRoutePositionPtr = (char *)ipOption + ipOption->len - sizeof(NODE_ADDR);
-   SetRawAddressBytes(node->nodeAddr,NewRoutePositionPtr);
+       ipOption = FindAnIpOptionField((IpHeaderType *) msg->packet, IPOPT_RR);
+       NewRoutePositionPtr = (char *)ipOption + ipOption->len - sizeof(NODE_ADDR);
+       SetRawAddressBytes(node->nodeAddr,NewRoutePositionPtr);
+   }else{
+       if(ipOption->ptr>=ipOption->len){
+           ipOption->ptr = IPOPT_MINOFF;
+       }
+       NewRoutePositionPtr = (char *)ipOption + ipOption->ptr;
+       SetRawAddressBytes(node->nodeAddr,NewRoutePositionPtr);
+       ipOption->ptr+=sizeof(NODE_ADDR);
+   }
    //DisplayRouteOfPacket(node,msg);
 }
 
@@ -658,7 +667,8 @@ int IGF_GetRouteRecord(Message * msg,NODE_ADDR* nodesarray){
  IpOptionsHeaderType* ipOptions = 
         FindAnIpOptionField((IpHeaderType*)msg->packet,IPOPT_RR);
  int count = 0;
-    char temp = ipOptions->ptr;
+ //char temp = ipOptions->ptr;
+ char temp = IPOPT_MINOFF;
     while (temp < ipOptions->len) {
          
         // Extract Next Address 
