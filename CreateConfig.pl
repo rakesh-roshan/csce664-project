@@ -58,7 +58,7 @@ for(my $p = 0; $p < @PacketArrivalRate; $p++){
                         if($line =~ /^ *SEED/){
                             print CONF_TO "SEED  $SeedSet[$k]\n";
                         }elsif($line =~ /^ *MOBILITY-WP-PAUSE/){
-                            print CONF_TO "MOBILITY-WP-PAUSE  $pauseTime\n";
+                            print CONF_TO "MOBILITY-WP-PAUSE  $pauseTime"."S\n";
                         }elsif($line =~ /^ *MOBILITY-WP-MIN-SPEED/){
                             print CONF_TO "MOBILITY-WP-MIN-SPEED  $speed\n";
                         }elsif($line =~ /^ *MOBILITY-WP-MAX-SPEED/){
