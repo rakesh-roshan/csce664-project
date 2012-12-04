@@ -1149,7 +1149,7 @@ BOOL Mac802_11CorrectSeqenceNumber(
 
    entry = Mac802_11GetSeqNo(node, M802, sourceAddr);
    assert(entry);
-   printf("%d == %d\n",entry->fromSeqNo,seqNo);
+   //printf("%d == %d\n",entry->fromSeqNo,seqNo);
    return (entry->fromSeqNo == seqNo);
 }
 
@@ -1293,7 +1293,7 @@ void Mac802_11TransmitFragAck(
 //NoFrag       txDelay = ((clocktype)(M802_11_SHORT_CTRL_FRAME_SIZE * SECOND) / 
 //NoFrag            M802->bandwidth);
 //NoFrag 
-//NoFrag       printf("802.11: Node %ld duration should not be negative (%ld)!\n", 
+//NoFrag       //printf("802.11: Node %ld duration should not be negative (%ld)!\n", 
 //NoFrag              node->nodeAddr, M802->noResponseTimeoutDuration);
 //NoFrag 
 //NoFrag       ctoa(txDelay, clockStr);
@@ -1689,7 +1689,7 @@ void Mac802_11ContinueBackoff(GlomoNode *node, GlomoMac802_11 *M802)
    {
       char clockStr[GLOMO_MAX_STRING_LENGTH];
       ctoa(M802->BO, clockStr);
-      printf("Node %ld continuing backoff to a negative timer: %s\n",
+      // printf("Node %ld continuing backoff to a negative timer: %s\n",
              node->nodeAddr, clockStr);
       exit(0);
    }
@@ -2208,6 +2208,8 @@ void RadioStatusIsNowIdleStartSendTimers(
    case M802_11_S_WFDATA:
    case M802_11_S_WFACK:    
    case M802_11_S_WFFRAGACK:
+   case M802_11_X_RCV_ORTS_ELIGIBLE_CTS: //anku
+   case M802_11_X_ORTS:
    
       
       
@@ -2310,7 +2312,7 @@ void Mac802_11ReceivePacketFromRadio(
       
       case M802_11_CTS:
           if(M802->state != M802_11_S_WFCTS)
-              printf("ROSHAN[SIM: %15s] node %d received CTS from %d state %d\n",TimeStringInSecond,node->nodeAddr,hdr->sourceAddr,M802->state);
+              // printf("ROSHAN[SIM: %15s] node %d received CTS from %d state %d\n",TimeStringInSecond,node->nodeAddr,hdr->sourceAddr,M802->state);
          assert(M802->state == M802_11_S_WFCTS);
          Mac802_11CancelTimer(node, M802);
          
@@ -2369,7 +2371,7 @@ void Mac802_11ReceivePacketFromRadio(
          break;
       
       default:
-         printf("MAC_802_11: Unknown frame type %d\n",
+          //printf("MAC_802_11: Unknown frame type %d\n",
                 hdr->frameType);
          assert(FALSE); abort();
       }/*switch*/
@@ -2391,7 +2393,7 @@ void Mac802_11ReceivePacketFromRadio(
           break;
       
       default:
-         printf("MAC_802_11: Unknown frame type %d\n",
+          // printf("MAC_802_11: Unknown frame type %d\n",
                 hdr->frameType);
          assert(FALSE); abort();
       }/*switch*/
@@ -2598,7 +2600,7 @@ void Mac802_11HandleTimeout(GlomoNode *node, GlomoMac802_11 *M802)
 
    case M802_11_S_WFCTS:
       M802->retxDueToCts++;
-      printf("ROSHAN[SIM: %15s] %d time out waiting for CTS\n",TimeStringInSecond,node->nodeAddr);
+      // printf("ROSHAN[SIM: %15s] %d time out waiting for CTS\n",TimeStringInSecond,node->nodeAddr);
       Mac802_11Retransmit(node, M802);
       break;
 
@@ -2616,7 +2618,7 @@ void Mac802_11HandleTimeout(GlomoNode *node, GlomoMac802_11 *M802)
        M802->ORtsMsg = NULL;
        break;
    default:
-      printf("MAC_802_11: Node %u got unknown state type %d",
+       // printf("MAC_802_11: Node %u got unknown state type %d",
              node->nodeAddr, M802->state);
 
       assert(FALSE);  abort();
