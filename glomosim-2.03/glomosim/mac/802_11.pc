@@ -1147,7 +1147,7 @@ BOOL Mac802_11CorrectSeqenceNumber(
 
    entry = Mac802_11GetSeqNo(node, M802, sourceAddr);
    assert(entry);
-   printf("%d == %d\n",entry->fromSeqNo,seqNo);
+   // printf("%d == %d\n",entry->fromSeqNo,seqNo);
    return (entry->fromSeqNo == seqNo);
 }
 
@@ -1261,7 +1261,7 @@ void Mac802_11TransmitOCTSFrame(GlomoNode *node, GlomoMac802_11 *M802,
 
    //Mac802_11TransmitCTSFrame(node,M802,M802->ORtsMsg);
     }else{
-        printf("ROSHAN %d canceling its timer\n",node->nodeAddr);
+        // printf("ROSHAN %d canceling its timer\n",node->nodeAddr);
         Mac802_11CancelTimer(node, M802);
         Mac802_11SetState(node, M802, M802_11_S_IDLE);
     }
@@ -1728,8 +1728,8 @@ void Mac802_11ContinueBackoff(GlomoNode *node, GlomoMac802_11 *M802)
    {
       char clockStr[GLOMO_MAX_STRING_LENGTH];
       ctoa(M802->BO, clockStr);
-      printf("Node %ld continuing backoff to a negative timer: %s\n",
-             node->nodeAddr, clockStr);
+      // printf("Node %ld continuing backoff to a negative timer: %s\n",
+      //     node->nodeAddr, clockStr);
       exit(0);
    }
 
@@ -2096,10 +2096,10 @@ void Mac802_11TransmitFrame(GlomoNode *node, GlomoMac802_11 *M802)
        (nextHopAddress != ANY_DEST))
    {
        if(M802->RTS_Sent){
-           printf("ROSHAN node %d transmiting ORTS\n",node->nodeAddr);
+           // printf("ROSHAN node %d transmiting ORTS\n",node->nodeAddr);
            Mac802_11TransmitORTSFrame(node, M802);
        }else{
-           printf("ROSHAN node %d transmiting RTS\n",node->nodeAddr);
+           // printf("ROSHAN node %d transmiting RTS\n",node->nodeAddr);
            Mac802_11TransmitRTSFrame(node, M802);
        }
    }
@@ -2421,8 +2421,8 @@ void Mac802_11ReceivePacketFromRadio(
          break;
       
       default:
-         printf("MAC_802_11: Unknown frame type %d\n",
-                hdr->frameType);
+          // printf("MAC_802_11: Unknown frame type %d\n",
+          //      hdr->frameType);
          assert(FALSE); abort();
       }/*switch*/
    }
@@ -2443,8 +2443,8 @@ void Mac802_11ReceivePacketFromRadio(
           break;
       
       default:
-         printf("MAC_802_11: Unknown frame type %d\n",
-                hdr->frameType);
+          // printf("MAC_802_11: Unknown frame type %d\n",
+          //                hdr->frameType);
          assert(FALSE); abort();
       }/*switch*/
    }
@@ -2673,8 +2673,8 @@ void Mac802_11HandleTimeout(GlomoNode *node, GlomoMac802_11 *M802)
        M802->ORtsMsg = NULL;
        break;
    default:
-      printf("MAC_802_11: Node %u got unknown state type %d",
-             node->nodeAddr, M802->state);
+       //printf("MAC_802_11: Node %u got unknown state type %d",
+       //             node->nodeAddr, M802->state);
 
       assert(FALSE);  abort();
    }
