@@ -40,22 +40,7 @@ void RoutingIGFInit(GlomoNode *node,
 	
   NetworkIpSetRouterFunction(node, &RoutingIGFRouterFunction);
 	
-  //schedule beacon
-
-  /*retVal = GLOMO_ReadString(node->nodeAddr, nodeInput, 
-			    "IGF_BEACON_INTERVAL", buf);
-  if(retVal == FALSE){
-    fprintf(stderr, "No IGF_BEACON_INTERVAL in IGF.in\n");
-    assert(FALSE);
-    abort();	
-  }
-  beacon_interval = GLOMO_ConvertToClock(buf);
-  GLOMO_PrintClockInSecond(beacon_interval, beaconIntervalStr);
-
-  IGF->numBeacons = 0;
-
-  IGF->beacon_interval = beacon_interval;*/
-  *IGFPtr = IGF;
+    *IGFPtr = IGF;
 	
   if(node->nodeAddr == 0) {
     IGF_LocServ_Init();
@@ -63,27 +48,8 @@ void RoutingIGFInit(GlomoNode *node,
 	
   IGF_LocServ_AddEntry(node);
   IGF_InitStats(node);
-  //IGF_InitNT(&IGF->nt);
-
-  //IGF_Enable_ScheduleABeacon(node);
-
+  
 }
-
-//***************************************************************************
-//***************************************************************************
-//***************************************************************************
-// delay the time to start the first beacon schedule
-/*void IGF_Enable_ScheduleABeacon(GlomoNode *node){
-  Message *enableScheduleABeaconTimer;
-  clocktype delay;	
-	
-  //enableScheduleABeaconTimer is used to start the first beacon schedule
-  enableScheduleABeaconTimer = GLOMO_MsgAlloc(node,GLOMO_NETWORK_LAYER,
-					      ROUTING_PROTOCOL_IGF,
-					      MSG_NETWORK_EVENT_IGFEnableScheduleABeacon);
-  delay= IGF_DELAYBEFOREBEACON;
-  GLOMO_MsgSend(node, enableScheduleABeaconTimer, delay);
-  }*/
 
 //***************************************************************************
 //***************************************************************************
@@ -95,45 +61,6 @@ void IGF_InitStats(GlomoNode * node){
   IGF->stats.numOfBeaconPkts = 0;
 }
 
-
-//***************************************************************************
-//***************************************************************************
-//***************************************************************************
-/*void IGF_ScheduleABeacon(GlomoNode *node) {
-
-  GlomoNetworkIp * ipLayer = (GlomoNetworkIp *)node->networkData.networkVar;
-  GlomoRoutingIGF * IGF = (GlomoRoutingIGF *)ipLayer->routingProtocol;
-  Message * scheduleABeaconTimer;
-  Message * startABeaconTimer;
-  NODE_ADDR * info;
-  clocktype delay;
-  double randomNumber;
-  char buf[GLOMO_MAX_STRING_LENGTH];
-  char TimeStringInSecond[GLOMO_MAX_STRING_LENGTH];
-	
-	
-  //scheduleABeacon is used to set periodic beacon
-  scheduleABeaconTimer = GLOMO_MsgAlloc(node, GLOMO_NETWORK_LAYER,
-					ROUTING_PROTOCOL_IGF,
-					MSG_NETWORK_EVENT_IGFScheduleABeacon);
-  GLOMO_MsgInfoAlloc(node, scheduleABeaconTimer,sizeof(NODE_ADDR));
-  info = (NODE_ADDR *) GLOMO_MsgReturnInfo(scheduleABeaconTimer);
-  *info= node->nodeAddr;
-  delay= IGF->beacon_interval;
-  GLOMO_MsgSend(node, scheduleABeaconTimer, delay);	
-	
-  //startABeaconTimer is used to send a beacon
-  startABeaconTimer = GLOMO_MsgAlloc(node, GLOMO_NETWORK_LAYER,
-				     ROUTING_PROTOCOL_IGF,
-				     MSG_NETWORK_EVENT_IGFStartABeacon);
-  GLOMO_MsgInfoAlloc(node, startABeaconTimer, sizeof(NODE_ADDR));
-  info = (NODE_ADDR *)GLOMO_MsgReturnInfo(startABeaconTimer);
-  *info= node->nodeAddr;
-  randomNumber = pc_erand(node->seed);
-  delay = randomNumber*IGF->beacon_interval;
-  IGF->stats.numOfBeaconPkts ++;
-  GLOMO_MsgSend(node, startABeaconTimer,delay);
-  }*/
 
 //***************************************************************************
 //***************************************************************************
@@ -156,19 +83,6 @@ void RoutingIGFHandleProtocolPacket(GlomoNode *node, Message *msg,
 				   NODE_ADDR srcAddr, 
 				   NODE_ADDR destAddr){
 	
-    /*IGF_PACKET_TYPE * packetType = (IGF_PACKET_TYPE *)GLOMO_MsgReturnPacket(msg);
-	
-  switch(*packetType){
-  case IGF_PACKET_TYPE_BEACON:{
-    IGF_HandleABeaconPacket(node,msg);
-    break;
-  }
-		
-  default:{
-    assert(FALSE);
-    abort();
-  }
-  }*/
     assert(FALSE);
     abort();
 }
@@ -195,78 +109,8 @@ void IGF_UpdateRoutingTable(GlomoNode * node, NODE_ADDR destaddr, NODE_ADDR next
     }
 
 }
-//***************************************************************************
-//***************************************************************************
-//***************************************************************************
-/*void IGF_HandleABeaconPacket(GlomoNode * node, Message* msg){
-  GlomoNetworkIp *ipLayer = (GlomoNetworkIp *) node->networkData.networkVar;
-  GlomoRoutingIGF *IGF = (GlomoRoutingIGF *) ipLayer->routingProtocol;
-  IGF_BEACON_PACKET *beaconPacket = (IGF_BEACON_PACKET *) GLOMO_MsgReturnPacket(msg);
-  char TimeStringInSecond[GLOMO_MAX_STRING_LENGTH];
-  IGF_NT *nt=&(IGF->nt);
-  IGF_NT_ENTRY * currEntry, *newEntry;
-  BOOL FOUND = FALSE;
-  GLOMO_PrintClockInSecond(simclock(), TimeStringInSecond);
 
-  // If the neighbor is not in the NT, add it
-  // .....
-  //
-  for(currEntry=nt->head;currEntry!=NULL;currEntry=currEntry->next){
-      if(currEntry->neighborID==beaconPacket->nodeID){
-          FOUND = TRUE;
-          break;
-      }
-  }
-
-  if(!FOUND){
-      newEntry = checked_pc_malloc(sizeof(IGF_NT_ENTRY));
-      newEntry->neighborID = beaconPacket->nodeID;
-      newEntry->neighborPosition = beaconPacket->nodePosition;
-      newEntry->refreshStatus = TRUE;
-      newEntry->neighborStatus = TRUE;
-#ifdef IGF_DEBUG
-      //if(node->nodeAddr==0)
-      //    IGF_PrintNT(node,&nt);
-      //printf("[SIM: %15s] IGF--Node %d being added to node %d's neighbor list \n",TimeStringInSecond,
-      //   beaconPacket->nodeID,node->nodeAddr);
-#endif
-      IGF_AddAEntryIntoNT(nt,newEntry);
-  }
-  GLOMO_MsgFree(node,msg);
-}
-
-//***************************************************************************
-//***************************************************************************
-//***************************************************************************
-//before add the new entry into it, we assume that it is not in the NT
-void IGF_AddAEntryIntoNT(IGF_NT *nt, IGF_NT_ENTRY *newEntry) {
-  IGF_NT_ENTRY * currEntry;
-  IGF_NT_ENTRY * rear;
-  char 	TimeStringInSecond[GLOMO_MAX_STRING_LENGTH];
-  GLOMO_PrintClockInSecond(simclock(), TimeStringInSecond);
-	
-  if(nt->head == NULL){
-    nt->head 	= newEntry;
-    newEntry->next	= NULL;
-    nt->size ++;
-#ifdef IGF_DEBUG
-      //if(node->nodeAddr==0)
-      //    IGF_PrintNT(node,&nt);
-    //printf("[SIM: %15s] IGF--Node %d added to neighbor list \n",TimeStringInSecond,
-    //       newEntry->neighborID);
-#endif
-    return;
-  }
-	
-  for(currEntry = nt->head; currEntry != NULL; currEntry = currEntry->next){
-    rear = currEntry;
-  }
-  rear->next = newEntry;
-  newEntry->next = NULL;
-  nt->size++;
-  }*/
-
-//anku
+//Method to add entry in routing table
 void IGF_AddEntryIntoRT(IGF_RT *rt,IGF_RT_Node *newrtEntry){
     IGF_RT_Node * currEntry;
     IGF_RT_Node * rear;
@@ -286,17 +130,6 @@ void IGF_AddEntryIntoRT(IGF_RT *rt,IGF_RT_Node *newrtEntry){
 
 }
 
-
-
-
-//***************************************************************************
-//***************************************************************************
-//***************************************************************************
-/*void IGF_InitNT(IGF_NT * nt){
-  nt->head = NULL;
-  nt->size = 0;
-  }*/
-
 //anku
 void IGF_InitRT(IGF_RT * rt){
     rt->head = NULL;
@@ -311,24 +144,6 @@ void RoutingIGFHandleProtocolEvent(GlomoNode *node, Message *msg){
   GlomoRoutingIGF *IGF = (GlomoRoutingIGF *)ipLayer->routingProtocol;
 
   switch(msg->eventType){
-      /*case MSG_NETWORK_EVENT_IGFScheduleABeacon:{
-    //IGF_ScheduleABeacon(node);
-    GLOMO_MsgFree(node, msg);
-    break;
-  }
-  case MSG_NETWORK_EVENT_IGFStartABeacon:{
-    //IGF_SendABeacon(node);
-    GLOMO_MsgFree(node,msg);
-    break;
-  }
-  case MSG_NETWORK_EVENT_IGFEnableScheduleABeacon:{
-    // Legacy MSG. Although identical with IGFScheduleABeacon right now,
-    // it was designed for a different purpose (i.e., there were a few other
-    // things done when this message was received.
-    //IGF_ScheduleABeacon(node);
-    GLOMO_MsgFree(node, msg);
-    break;	
-    }*/
   default:{
     assert(FALSE);
     abort();
@@ -355,34 +170,6 @@ void SetRawAddressBytes(NODE_ADDR nodeAddress, char RawAddressBytes[])
    memcpy(RawAddressBytes, &nodeAddress, sizeof(NODE_ADDR));
 }
 
-
-//***************************************************************************
-//***************************************************************************
-//***************************************************************************
-/*void IGF_SendABeacon(GlomoNode * node) {
-
-  GlomoNetworkIp * ipLayer = (GlomoNetworkIp *)node->networkData.networkVar;
-  GlomoRoutingIGF * IGF = (GlomoRoutingIGF *)ipLayer->routingProtocol;
-  Message * newMsg = GLOMO_MsgAlloc(node, 0,0,0);
-  IGF_BEACON_PACKET * beaconPacket;
-  char TimeStringInSecond[GLOMO_MAX_STRING_LENGTH];
-  int pktSize = sizeof(IGF_BEACON_PACKET);
-
-  GLOMO_MsgPacketAlloc(node, newMsg, pktSize);
-  //beaconPacket = checked_pc_malloc(sizeof(IGF_BEACON_PACKET));
-  beaconPacket =  (IGF_BEACON_PACKET *) GLOMO_MsgReturnPacket(newMsg);
-
-  beaconPacket->packetType = IGF_PACKET_TYPE_BEACON;
-  beaconPacket->nodeID = node->nodeAddr;
-  beaconPacket->nodePosition = node->position;
-  
-  // send a beacon through NetworkIpSendRawGlomoMessage
-  // ....
-  //
-  NetworkIpSendRawGlomoMessage(
-     node, newMsg, ANY_DEST, CONTROL, IPPROTO_IGF, 1);
-
-     }*/
 
 void IGF_AddToRouteRecord(GlomoNode *node, Message *msg)
 {
@@ -475,31 +262,6 @@ void RoutingIGFRouterFunction(GlomoNode *node,
   IGF_MakeRoutingDecision(node, msg, destAddr);
 }
 
-
-//***************************************************************************
-//***************************************************************************
-//***************************************************************************
-/*void IGF_PrintNT(GlomoNode * node, IGF_NT * nt) {
-
-  IGF_NT_ENTRY *currEntry;
-	
-  printf("\nThe neighbor table of node %d is:\n", node->nodeAddr);
-  for(currEntry = nt->head; currEntry != NULL; currEntry = currEntry->next){
-    printf("neighborID: %d \t neighborPosition: (%f,%f,%f) \t ",
-	   "neighborStatus: %d \t refreshStatus: %d\n", 
-	   currEntry->neighborID, 
-	   currEntry->neighborPosition.x, 
-	   currEntry->neighborPosition.y, 
-	   currEntry->neighborPosition.z,
-	   currEntry->neighborStatus,
-	   currEntry->refreshStatus);
-  }
-
-  printf("\n");
-
-  }*/
-
-
 //***************************************************************************
 //***************************************************************************
 //***************************************************************************
@@ -537,9 +299,7 @@ void IGF_MakeRoutingDecision(GlomoNode *node,
     // Get the next hop and send the packet to the MAC layer
     // through NetworkIpSendPacketToMacLayer
     // ....
-      // TODO
       nextHop = IGF_GetNextHop(rt,node,destAddr);
-      //nextHop = destAddr;
       if(nextHop != 0xffff){
     
           NetworkIpSendPacketToMacLayer(node, msg, DEFAULT_INTERFACE, nextHop);
@@ -694,10 +454,4 @@ int IGF_GetRouteRecord(Message * msg,NODE_ADDR* nodesarray){
     } 
     return count;
 
-
-
-
-
 }
-
-
