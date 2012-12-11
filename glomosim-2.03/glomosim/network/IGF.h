@@ -18,19 +18,6 @@ typedef struct
     int size;
 } IGF_RT;
 
-typedef struct IGF_NT_entry {
-  NODE_ADDR 	 neighborID;
-  GlomoCoordinates neighborPosition;
-  BOOL 	refreshStatus;
-  BOOL 	neighborStatus;  
-  struct IGF_NT_entry *next;
-} IGF_NT_ENTRY;
-
-typedef struct {
-  IGF_NT_ENTRY *head;
-  int size;
-} IGF_NT;
-
 typedef struct IGF_LOCATION_SERVICE_entry {
   NODE_ADDR		nodeAddr;
   GlomoCoordinates	position;
@@ -42,16 +29,6 @@ typedef struct {
   int size;
 } IGF_LOCATION_SERVICE_TABLE;
 
-typedef enum {
-  IGF_PACKET_TYPE_BEACON
-} IGF_PACKET_TYPE;
-
-typedef struct {
-  IGF_PACKET_TYPE packetType;
-  NODE_ADDR nodeID;
-  GlomoCoordinates nodePosition; 
-} IGF_BEACON_PACKET;
-
 typedef struct{
   int	packet_send;
   int	packet_recv;
@@ -59,7 +36,6 @@ typedef struct{
 } IGF_STATS;
 
 typedef struct {	
-  IGF_NT     nt;
   NODE_ADDR nodeID;
   GlomoCoordinates nodePosition;
   int	seqNO;
@@ -74,10 +50,6 @@ typedef struct {
 void RoutingIGFInit(GlomoNode *node, 
 		   GlomoRoutingIGF **IGFPtr, 
 		   const GlomoNodeInput *nodeInput);
-
-void IGF_ScheduleABeacon(GlomoNode *node);
-
-void IGF_SendABeacon(GlomoNode * node);
 
 void RoutingIGFFinalize(GlomoNode *node);
 
@@ -94,23 +66,8 @@ void RoutingIGFRouterFunction(GlomoNode *node,
 			     NODE_ADDR destAddr,
 			     BOOL *packetWasRouted);
    
-void IGF_AddAEntryIntoNT(IGF_NT * nt, IGF_NT_ENTRY *newEntry);
-
-void IGF_InitNT(IGF_NT * nt);
-
-void IGF_PrintNT(GlomoNode * node, IGF_NT * nt);
-    
-void IGF_HandleABeaconPacket(GlomoNode * node, Message* msg);
-    
 void IGF_MakeRoutingDecision(GlomoNode *	node, 
 			    Message * msg, NODE_ADDR destAddr);
-
-NODE_ADDR IGF_GetNextHop(IGF_NT *nt, GlomoNode * node, NODE_ADDR destAddr);
-
-double IGF_GetDistance(GlomoCoordinates sourceAddr, GlomoCoordinates destAddr);
-
-// delay the time to start the first beacon schedule
-void IGF_Enable_ScheduleABeacon(GlomoNode *node);
 
 GlomoCoordinates IGF_GetPosition(NODE_ADDR node);
 
