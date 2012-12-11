@@ -63,7 +63,7 @@ void RoutingIGFInit(GlomoNode *node,
 	
   IGF_LocServ_AddEntry(node);
   IGF_InitStats(node);
-  IGF_InitNT(&IGF->nt);
+  //IGF_InitNT(&IGF->nt);
 
   //IGF_Enable_ScheduleABeacon(node);
 
@@ -73,7 +73,7 @@ void RoutingIGFInit(GlomoNode *node,
 //***************************************************************************
 //***************************************************************************
 // delay the time to start the first beacon schedule
-void IGF_Enable_ScheduleABeacon(GlomoNode *node){
+/*void IGF_Enable_ScheduleABeacon(GlomoNode *node){
   Message *enableScheduleABeaconTimer;
   clocktype delay;	
 	
@@ -83,7 +83,7 @@ void IGF_Enable_ScheduleABeacon(GlomoNode *node){
 					      MSG_NETWORK_EVENT_IGFEnableScheduleABeacon);
   delay= IGF_DELAYBEFOREBEACON;
   GLOMO_MsgSend(node, enableScheduleABeaconTimer, delay);
-}
+  }*/
 
 //***************************************************************************
 //***************************************************************************
@@ -99,7 +99,7 @@ void IGF_InitStats(GlomoNode * node){
 //***************************************************************************
 //***************************************************************************
 //***************************************************************************
-void IGF_ScheduleABeacon(GlomoNode *node) {
+/*void IGF_ScheduleABeacon(GlomoNode *node) {
 
   GlomoNetworkIp * ipLayer = (GlomoNetworkIp *)node->networkData.networkVar;
   GlomoRoutingIGF * IGF = (GlomoRoutingIGF *)ipLayer->routingProtocol;
@@ -133,7 +133,7 @@ void IGF_ScheduleABeacon(GlomoNode *node) {
   delay = randomNumber*IGF->beacon_interval;
   IGF->stats.numOfBeaconPkts ++;
   GLOMO_MsgSend(node, startABeaconTimer,delay);
-}
+  }*/
 
 //***************************************************************************
 //***************************************************************************
@@ -156,7 +156,7 @@ void RoutingIGFHandleProtocolPacket(GlomoNode *node, Message *msg,
 				   NODE_ADDR srcAddr, 
 				   NODE_ADDR destAddr){
 	
-  IGF_PACKET_TYPE * packetType = (IGF_PACKET_TYPE *)GLOMO_MsgReturnPacket(msg);
+    /*IGF_PACKET_TYPE * packetType = (IGF_PACKET_TYPE *)GLOMO_MsgReturnPacket(msg);
 	
   switch(*packetType){
   case IGF_PACKET_TYPE_BEACON:{
@@ -168,8 +168,11 @@ void RoutingIGFHandleProtocolPacket(GlomoNode *node, Message *msg,
     assert(FALSE);
     abort();
   }
-  }
+  }*/
+    assert(FALSE);
+    abort();
 }
+
 //anku
 void IGF_UpdateRoutingTable(GlomoNode * node, NODE_ADDR destaddr, NODE_ADDR nextHop){
     BOOL found = FALSE;
@@ -195,7 +198,7 @@ void IGF_UpdateRoutingTable(GlomoNode * node, NODE_ADDR destaddr, NODE_ADDR next
 //***************************************************************************
 //***************************************************************************
 //***************************************************************************
-void IGF_HandleABeaconPacket(GlomoNode * node, Message* msg){
+/*void IGF_HandleABeaconPacket(GlomoNode * node, Message* msg){
   GlomoNetworkIp *ipLayer = (GlomoNetworkIp *) node->networkData.networkVar;
   GlomoRoutingIGF *IGF = (GlomoRoutingIGF *) ipLayer->routingProtocol;
   IGF_BEACON_PACKET *beaconPacket = (IGF_BEACON_PACKET *) GLOMO_MsgReturnPacket(msg);
@@ -261,7 +264,8 @@ void IGF_AddAEntryIntoNT(IGF_NT *nt, IGF_NT_ENTRY *newEntry) {
   rear->next = newEntry;
   newEntry->next = NULL;
   nt->size++;
-}
+  }*/
+
 //anku
 void IGF_AddEntryIntoRT(IGF_RT *rt,IGF_RT_Node *newrtEntry){
     IGF_RT_Node * currEntry;
@@ -288,10 +292,10 @@ void IGF_AddEntryIntoRT(IGF_RT *rt,IGF_RT_Node *newrtEntry){
 //***************************************************************************
 //***************************************************************************
 //***************************************************************************
-void IGF_InitNT(IGF_NT * nt){
+/*void IGF_InitNT(IGF_NT * nt){
   nt->head = NULL;
   nt->size = 0;
-}
+  }*/
 
 //anku
 void IGF_InitRT(IGF_RT * rt){
@@ -307,7 +311,7 @@ void RoutingIGFHandleProtocolEvent(GlomoNode *node, Message *msg){
   GlomoRoutingIGF *IGF = (GlomoRoutingIGF *)ipLayer->routingProtocol;
 
   switch(msg->eventType){
-  case MSG_NETWORK_EVENT_IGFScheduleABeacon:{
+      /*case MSG_NETWORK_EVENT_IGFScheduleABeacon:{
     //IGF_ScheduleABeacon(node);
     GLOMO_MsgFree(node, msg);
     break;
@@ -324,7 +328,7 @@ void RoutingIGFHandleProtocolEvent(GlomoNode *node, Message *msg){
     //IGF_ScheduleABeacon(node);
     GLOMO_MsgFree(node, msg);
     break;	
-  }
+    }*/
   default:{
     assert(FALSE);
     abort();
@@ -355,7 +359,7 @@ void SetRawAddressBytes(NODE_ADDR nodeAddress, char RawAddressBytes[])
 //***************************************************************************
 //***************************************************************************
 //***************************************************************************
-void IGF_SendABeacon(GlomoNode * node) {
+/*void IGF_SendABeacon(GlomoNode * node) {
 
   GlomoNetworkIp * ipLayer = (GlomoNetworkIp *)node->networkData.networkVar;
   GlomoRoutingIGF * IGF = (GlomoRoutingIGF *)ipLayer->routingProtocol;
@@ -378,7 +382,7 @@ void IGF_SendABeacon(GlomoNode * node) {
   NetworkIpSendRawGlomoMessage(
      node, newMsg, ANY_DEST, CONTROL, IPPROTO_IGF, 1);
 
-}
+     }*/
 
 void IGF_AddToRouteRecord(GlomoNode *node, Message *msg)
 {
@@ -475,7 +479,7 @@ void RoutingIGFRouterFunction(GlomoNode *node,
 //***************************************************************************
 //***************************************************************************
 //***************************************************************************
-void IGF_PrintNT(GlomoNode * node, IGF_NT * nt) {
+/*void IGF_PrintNT(GlomoNode * node, IGF_NT * nt) {
 
   IGF_NT_ENTRY *currEntry;
 	
@@ -493,7 +497,7 @@ void IGF_PrintNT(GlomoNode * node, IGF_NT * nt) {
 
   printf("\n");
 
-}
+  }*/
 
 
 //***************************************************************************

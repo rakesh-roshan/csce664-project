@@ -14,8 +14,9 @@ for(my $i=11,my $j=0; $j<10; $j++,$i++){
 #my @PacketArrivalRate = (1, 0.5, 0.25, 0.1, 0.05, 0.025, 0.01, 0.005, 0.0025, 0.001);
 #my @PauseTime         = (2, 5, 7, 10, 15, 20);
 my @Speed             = (0,2,5,7,10,15,20,25,30);
-my @PacketArrivalRate = (1);
-my @PauseTime         = (2, 5);
+my @PacketArrivalRate = (0.5);
+my @PauseTime         = (2, 5, 7, 10, 15, 20);
+
 
 ######## some parameters for confidence intervals ##########################
 
@@ -40,11 +41,11 @@ for(my $i=0;$i<@PacketArrivalRate;$i++){
 	die("Create $ConfigFileName-SuccDeliPkt_$PacketArrivalRate[$i].EXCEL fail!\n");
     print	"File $ConfigFileName-SuccDeliPkt_$PacketArrivalRate[$i].EXCEL is opened successfully!\n";
     open(DELAY_FILE,">$ConfigFileName-AvgDelay_$PacketArrivalRate[$i].EXCEL") ||
-	die("Create $ConfigFileName-SuccDeliPkt_$PacketArrivalRate[$i].EXCEL fail!\n");
-    print	"File $ConfigFileName-SuccDeliPkt_$PacketArrivalRate[$i].EXCEL is opened successfully!\n";
+	die("Create $ConfigFileName-AvgDelay_$PacketArrivalRate[$i].EXCEL fail!\n");
+    print	"File $ConfigFileName-AvgDelay_$PacketArrivalRate[$i].EXCEL is opened successfully!\n";
     open(THROUGHPUT_FILE,">$ConfigFileName-Throughput_$PacketArrivalRate[$i].EXCEL") ||
-	die("Create $ConfigFileName-SuccDeliPkt_$PacketArrivalRate[$i].EXCEL fail!\n");
-    print	"File $ConfigFileName-SuccDeliPkt_$PacketArrivalRate[$i].EXCEL is opened successfully!\n";
+	die("Create $ConfigFileName-Throughput_$PacketArrivalRate[$i].EXCEL fail!\n");
+    print	"File $ConfigFileName-Throughput_$PacketArrivalRate[$i].EXCEL is opened successfully!\n";
     
     print DLV_FILE "TitleText: Average Packet Delivery Rate with Speed.\n".
         "XUnitText: Speed(in m/sec)\n".
@@ -76,8 +77,8 @@ for(my $i=0;$i<@PacketArrivalRate;$i++){
                     || die("Open ./$ConfigFileName-sp$speed-p$pauseTime-s$SeedSet[$j]".
                            "-a$PacketArrivalRate[$i].stat fail!\n");
 	    	
-                print	"File ./$ConfigFileName-sp$speed-p$pauseTime-s$SeedSet[$j]".
-                    "-a$PacketArrivalRate[$i].stat is opened successfully!\n";	
+                #print	"File ./$ConfigFileName-sp$speed-p$pauseTime-s$SeedSet[$j]".
+                #    "-a$PacketArrivalRate[$i].stat is opened successfully!\n";	
 	    
                 my $SuccDeliPkt = 0;
                 my $PktSent = 0;
